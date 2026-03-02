@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ManageStudentsView extends StatefulWidget {
   const ManageStudentsView({super.key, required this.email});
@@ -24,12 +25,30 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label)),
-        Switch(value: value, onChanged: onChanged),
-      ],
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => onChanged(!value),
+      child: Row(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: value ? const Color(0xFFFFC425) : Colors.white,
+              border: Border.all(
+                color: value ? const Color(0xFFFFC425) : Colors.grey.shade400,
+                width: 2,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          Text(label, style: const TextStyle(fontSize: 14)),
+        ],
+      ),
     );
   }
 
@@ -42,6 +61,11 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
     } else {
       _hideFilterOverlay();
     }
+  }
+
+  void _setFilter(VoidCallback fn) {
+    setState(fn);
+    _filterEntry?.markNeedsBuild();
   }
 
   void _showFilterOverlay() {
@@ -66,7 +90,7 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
               child: Material(
                 color: Colors.transparent,
                 child: Container(
-                  width: 300,
+                  width: 280,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -87,17 +111,17 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                         children: [
                           Expanded(
                             child: _yearToggle(
-                              label: "Year 1",
+                              label: "1st Year",
                               value: _year1,
-                              onChanged: (val) => setState(() => _year1 = val),
+                              onChanged: (val) => _setFilter(() => _year1 = val),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: _yearToggle(
-                              label: "Year 2",
+                              label: "2nd Year",
                               value: _year2,
-                              onChanged: (val) => setState(() => _year2 = val),
+                              onChanged: (val) => _setFilter(() => _year2 = val),
                             ),
                           ),
                         ],
@@ -105,21 +129,25 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
 
                       const SizedBox(height: 8),
 
+                      Divider(color: Colors.grey.shade200, thickness: 1),
+
+                      const SizedBox(height: 8),
+
                       Row(
                         children: [
                           Expanded(
                             child: _yearToggle(
-                              label: "Year 3",
+                              label: "3rd Year",
                               value: _year3,
-                              onChanged: (val) => setState(() => _year3 = val),
+                              onChanged: (val) => _setFilter(() => _year3 = val),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: _yearToggle(
-                              label: "Year 4",
+                              label: "4th Year",
                               value: _year4,
-                              onChanged: (val) => setState(() => _year4 = val),
+                              onChanged: (val) => _setFilter(() => _year4 = val),
                             ),
                           ),
                         ],
@@ -178,7 +206,7 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                   // Register Button
                   ElevatedButton.icon(
                     onPressed: () {
-                      // TODO: Navigate to register student page
+                      context.go("/dashboard/admin/students/register");
                     },
                     icon: const Icon(Icons.person_add, color: Colors.black),
                     label: const Text(

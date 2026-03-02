@@ -1,11 +1,9 @@
 import 'package:cu_plus_webapp/features/auth/ui/first_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/network/api_client.dart';
 import '../api/auth_api.dart';
-import '../../dashboard/ui/dashboard_shell.dart';
-import './first_page.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -62,27 +60,9 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      // popup
-      // await showDialog(
-      //   context: context,
-      //   builder: (_) => AlertDialog(
-      //     title: const Text("Success"),
-      //     content: const Text("Login successful!"),
-      //     actions: [
-      //       TextButton(
-      //         onPressed: () => Navigator.pop(context),
-      //         child: const Text("OK"),
-      //       ),
-      //     ],
-      //   ),
-      // );
-
       // navigate
       if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        CupertinoPageRoute(builder: (_) => DashboardShell(email: email)),
-      );
+      context.go("/dashboard?email=$email");
 
       final token = (res["token"] ?? "").toString();
       setState(() {
@@ -415,19 +395,7 @@ class _LoginPageState extends State<LoginPage> {
                           SizedBox(
                             width: 150,
                             child: ElevatedButton(
-                              onPressed: () => Navigator.pushReplacement(
-                                context,
-                                PageRouteBuilder(
-                                  pageBuilder: (_, __, ___) => FirstPage(),
-                                  transitionsBuilder:
-                                      (_, animation, __, child) {
-                                        return FadeTransition(
-                                          opacity: animation,
-                                          child: child,
-                                        );
-                                      },
-                                ),
-                              ),
+                              onPressed: () => context.go('/'), // back to first page
                               style:
                                   ElevatedButton.styleFrom(
                                     backgroundColor: Color.fromARGB(

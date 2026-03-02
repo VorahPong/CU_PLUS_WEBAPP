@@ -1,23 +1,12 @@
-import 'package:cu_plus_webapp/features/auth/ui/first_page.dart';
-import 'package:cu_plus_webapp/features/auth/ui/login_page.dart';
-import 'package:cu_plus_webapp/features/students/ui/course_content_view.dart';
-import 'package:cu_plus_webapp/features/admin/ui/manage_students_view.dart';
-import 'package:cu_plus_webapp/features/students/ui/message_view.dart';
-import 'package:cu_plus_webapp/features/students/ui/calender_view.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/side_bar.dart';
 
 class DashboardShell extends StatefulWidget {
-  const DashboardShell({
-    super.key,
-    required this.email,
-    this.initialItem = SidebarItem.courseContent,
-  });
+  const DashboardShell({super.key, required this.email, required this.child});
 
   final String email;
-  final SidebarItem initialItem;
-
+  final Widget child;
   @override
   State<DashboardShell> createState() => _DashboardShellState();
 }
@@ -29,7 +18,7 @@ class _DashboardShellState extends State<DashboardShell> {
   @override
   void initState() {
     super.initState();
-    _selectedItem = widget.initialItem;
+    _selectedItem = SidebarItem.courseContent;
   }
 
   void _selectItem(SidebarItem item, {required bool isDesktop}) {
@@ -37,22 +26,27 @@ class _DashboardShellState extends State<DashboardShell> {
       _selectedItem = item;
       if (!isDesktop) _showSidebar = false;
     });
-  }
 
-  String _titleFor(SidebarItem item) {
+    // ✅ route based on item
     switch (item) {
       case SidebarItem.courseContent:
-        return "Course Content";
-      case SidebarItem.manageStudents:
-        return "Manage Students";
+        context.go('/dashboard'); // or /dashboard/course-content
+        break;
       case SidebarItem.message:
-        return "Message";
+        context.go('/dashboard/message');
+        break;
       case SidebarItem.calendar:
-        return "Calendar";
+        context.go('/dashboard/calendar');
+        break;
+      case SidebarItem.manageStudents:
+        context.go('/dashboard/admin/students');
+        break;
       case SidebarItem.support:
-        return "Support";
+        context.go('/dashboard/support');
+        break;
       case SidebarItem.setting:
-        return "Setting";
+        context.go('/dashboard/setting');
+        break;
     }
   }
 
@@ -70,22 +64,32 @@ class _DashboardShellState extends State<DashboardShell> {
           });
         }
 
-        final content = IndexedStack(
-          index: _indexFor(_selectedItem),
-          children: [
-            CourseContentView(email: widget.email),
-            MessageView(email: widget.email),
-            CalenderView(email: widget.email),
-            ManageStudentsView(email: widget.email),
-            Center(child: Text("Support — Logged in as: ${widget.email}")),
-            Center(child: Text("Setting — Logged in as: ${widget.email}")),
-          ],
-        );
+        final content = widget.child;
+
+        final loc = GoRouterState.of(context).uri.toString();
+
+        final SidebarItem routeItem;
+        if (loc.startsWith('/dashboard/admin/students')) {
+          routeItem = SidebarItem.manageStudents;
+        } else if (loc.startsWith('/dashboard/message')) {
+          routeItem = SidebarItem.message;
+        } else if (loc.startsWith('/dashboard/calendar')) {
+          routeItem = SidebarItem.calendar;
+        } else if (loc.startsWith('/dashboard/support')) {
+          routeItem = SidebarItem.support;
+        } else if (loc.startsWith('/dashboard/setting')) {
+          routeItem = SidebarItem.setting;
+        } else {
+          routeItem = SidebarItem.courseContent;
+        }
+
+        // keep UI in sync with URL (without setState)
+        _selectedItem = routeItem;
 
         return Scaffold(
           appBar: AppBar(
             automaticallyImplyLeading: false,
-            title: Text(_titleFor(_selectedItem)),
+            title: Text("Welcome, ${widget.email}"),
             leading: isDesktop
                 ? null
                 : IconButton(

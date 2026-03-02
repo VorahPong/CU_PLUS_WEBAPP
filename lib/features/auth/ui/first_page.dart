@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import './login_page.dart';
 
 class FirstPage extends StatelessWidget {
@@ -31,18 +32,7 @@ class FirstPage extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: () {
                             // Navigate to the next page
-                            Navigator.push(
-                              context,
-                              PageRouteBuilder(
-                                pageBuilder: (_, __, ___) => const LoginPage(),
-                                transitionsBuilder: (_, animation, __, child) {
-                                  return FadeTransition(
-                                    opacity: animation,
-                                    child: child,
-                                  );
-                                },
-                              ),
-                            );
+                            context.go('/login');
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color.fromARGB(
