@@ -1,12 +1,15 @@
+import 'package:cu_plus_webapp/features/auth/ui/first_page.dart';
+import 'package:cu_plus_webapp/features/auth/ui/login_page.dart';
 import 'package:cu_plus_webapp/features/students/ui/course_content_view.dart';
 import 'package:cu_plus_webapp/features/admin/ui/manage_students_view.dart';
 import 'package:cu_plus_webapp/features/students/ui/message_view.dart';
 import 'package:cu_plus_webapp/features/students/ui/calender_view.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/side_bar.dart';
 
-class CourseContentPage extends StatefulWidget {
-  const CourseContentPage({
+class DashboardShell extends StatefulWidget {
+  const DashboardShell({
     super.key,
     required this.email,
     this.initialItem = SidebarItem.courseContent,
@@ -16,10 +19,10 @@ class CourseContentPage extends StatefulWidget {
   final SidebarItem initialItem;
 
   @override
-  State<CourseContentPage> createState() => _CourseContentState();
+  State<DashboardShell> createState() => _DashboardShellState();
 }
 
-class _CourseContentState extends State<CourseContentPage> {
+class _DashboardShellState extends State<DashboardShell> {
   bool _showSidebar = false;
   late SidebarItem _selectedItem;
 
@@ -87,7 +90,8 @@ class _CourseContentState extends State<CourseContentPage> {
                 ? null
                 : IconButton(
                     icon: const Icon(Icons.menu),
-                    onPressed: () => setState(() => _showSidebar = !_showSidebar),
+                    onPressed: () =>
+                        setState(() => _showSidebar = !_showSidebar),
                   ),
           ),
           body: isDesktop
@@ -99,7 +103,7 @@ class _CourseContentState extends State<CourseContentPage> {
                         selectedItem: _selectedItem,
                         onSelect: (item) => _selectItem(item, isDesktop: true),
                         onLogout: () {
-                          Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+                          context.go('/login');
                         },
                       ),
                     ),
@@ -117,7 +121,9 @@ class _CourseContentState extends State<CourseContentPage> {
                         opacity: _showSidebar ? 1 : 0,
                         child: GestureDetector(
                           onTap: () => setState(() => _showSidebar = false),
-                          child: Container(color: Colors.black.withOpacity(0.35)),
+                          child: Container(
+                            color: Colors.black.withOpacity(0.35),
+                          ),
                         ),
                       ),
                     ),
@@ -127,7 +133,9 @@ class _CourseContentState extends State<CourseContentPage> {
                       child: AnimatedSlide(
                         duration: const Duration(milliseconds: 240),
                         curve: Curves.easeOutCubic,
-                        offset: _showSidebar ? Offset.zero : const Offset(-1, 0),
+                        offset: _showSidebar
+                            ? Offset.zero
+                            : const Offset(-1, 0),
                         child: AnimatedOpacity(
                           duration: const Duration(milliseconds: 180),
                           opacity: _showSidebar ? 1 : 0,
@@ -135,10 +143,11 @@ class _CourseContentState extends State<CourseContentPage> {
                             width: double.infinity,
                             child: Sidebar(
                               selectedItem: _selectedItem,
-                              onSelect: (item) => _selectItem(item, isDesktop: false),
+                              onSelect: (item) =>
+                                  _selectItem(item, isDesktop: false),
                               onLogout: () {
                                 setState(() => _showSidebar = false);
-                                Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+                                context.go('/login');
                               },
                             ),
                           ),

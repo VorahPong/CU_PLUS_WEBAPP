@@ -81,7 +81,7 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        CupertinoPageRoute(builder: (_) => CourseContentPage(email: email)),
+        CupertinoPageRoute(builder: (_) => DashboardShell(email: email)),
       );
 
       final token = (res["token"] ?? "").toString();
@@ -415,7 +415,19 @@ class _LoginPageState extends State<LoginPage> {
                           SizedBox(
                             width: 150,
                             child: ElevatedButton(
-                              onPressed: () => Navigator.pop(context),
+                              onPressed: () => Navigator.pushReplacement(
+                                context,
+                                PageRouteBuilder(
+                                  pageBuilder: (_, __, ___) => FirstPage(),
+                                  transitionsBuilder:
+                                      (_, animation, __, child) {
+                                        return FadeTransition(
+                                          opacity: animation,
+                                          child: child,
+                                        );
+                                      },
+                                ),
+                              ),
                               style:
                                   ElevatedButton.styleFrom(
                                     backgroundColor: Color.fromARGB(

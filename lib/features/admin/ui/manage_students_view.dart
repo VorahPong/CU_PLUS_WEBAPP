@@ -25,6 +25,7 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
     required ValueChanged<bool> onChanged,
   }) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(child: Text(label)),
         Switch(value: value, onChanged: onChanged),
@@ -48,7 +49,7 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
       builder: (context) {
         return Stack(
           children: [
-            // ✅ Click outside to close
+            // Click outside to close
             Positioned.fill(
               child: GestureDetector(
                 behavior: HitTestBehavior.translucent,
@@ -57,7 +58,7 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
               ),
             ),
 
-            // ✅ The floating dropdown anchored to the Filter button
+            // The floating dropdown anchored to the Filter button
             CompositedTransformFollower(
               link: _filterLink,
               showWhenUnlinked: false,
@@ -65,7 +66,7 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
               child: Material(
                 color: Colors.transparent,
                 child: Container(
-                  width: 200,
+                  width: 300,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -82,25 +83,46 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _yearToggle(
-                        label: "Year 1",
-                        value: _year1,
-                        onChanged: (val) => setState(() => _year1 = val),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _yearToggle(
+                              label: "Year 1",
+                              value: _year1,
+                              onChanged: (val) => setState(() => _year1 = val),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _yearToggle(
+                              label: "Year 2",
+                              value: _year2,
+                              onChanged: (val) => setState(() => _year2 = val),
+                            ),
+                          ),
+                        ],
                       ),
-                      _yearToggle(
-                        label: "Year 2",
-                        value: _year2,
-                        onChanged: (val) => setState(() => _year2 = val),
-                      ),
-                      _yearToggle(
-                        label: "Year 3",
-                        value: _year3,
-                        onChanged: (val) => setState(() => _year3 = val),
-                      ),
-                      _yearToggle(
-                        label: "Year 4",
-                        value: _year4,
-                        onChanged: (val) => setState(() => _year4 = val),
+
+                      const SizedBox(height: 8),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _yearToggle(
+                              label: "Year 3",
+                              value: _year3,
+                              onChanged: (val) => setState(() => _year3 = val),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _yearToggle(
+                              label: "Year 4",
+                              value: _year4,
+                              onChanged: (val) => setState(() => _year4 = val),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
