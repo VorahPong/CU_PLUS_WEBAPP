@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/side_bar.dart';
+import '../widgets/top_nav_bar.dart';
 
 class DashboardShell extends StatefulWidget {
   const DashboardShell({super.key, required this.email, required this.child});
@@ -87,16 +88,11 @@ class _DashboardShellState extends State<DashboardShell> {
         _selectedItem = routeItem;
 
         return Scaffold(
-          appBar: AppBar(
-            automaticallyImplyLeading: false,
-            title: Text("Welcome, ${widget.email}"),
-            leading: isDesktop
-                ? null
-                : IconButton(
-                    icon: const Icon(Icons.menu),
-                    onPressed: () =>
-                        setState(() => _showSidebar = !_showSidebar),
-                  ),
+          appBar: NavBar(
+            showMenu: !isDesktop,
+            onMenuPressed: () => setState(() => _showSidebar = !_showSidebar),
+            username: widget.email,
+            //\automaticallyImplyLeading: false,
           ),
           body: isDesktop
               ? Row(

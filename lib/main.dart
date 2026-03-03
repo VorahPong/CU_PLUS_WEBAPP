@@ -2,6 +2,7 @@ import 'package:cu_plus_webapp/features/admin/ui/manage_students_view.dart';
 import 'package:cu_plus_webapp/features/admin/ui/register_student_view.dart';
 import 'package:cu_plus_webapp/features/auth/ui/login_page.dart';
 import 'package:cu_plus_webapp/features/dashboard/ui/dashboard_shell.dart';
+import 'package:cu_plus_webapp/features/students/ui/course_content_view.dart';
 import 'package:flutter/material.dart';
 import 'features/auth/ui/first_page.dart';
 import 'package:go_router/go_router.dart';
@@ -15,8 +16,22 @@ class MyApp extends StatelessWidget {
   static final GoRouter _router = GoRouter(
     initialLocation: '/',
     routes: [
-      GoRoute(path: '/', builder: (context, state) => FirstPage()),
-      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
+      GoRoute(
+        path: '/',
+        pageBuilder: (context, state) {
+          return CustomTransitionPage(key: state.pageKey, child: FirstPage(), transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          });
+        },
+      ),
+      GoRoute(
+        path: '/login',
+        pageBuilder: (context, state) {
+          return CustomTransitionPage(key: state.pageKey, child: const LoginPage(), transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          });
+        },
+      ),
       // Everything under /dashboard keeps sidebar
       ShellRoute(
         builder: (context, state, child) {
@@ -30,21 +45,32 @@ class MyApp extends StatelessWidget {
         routes: [
           GoRoute(
             path: '/dashboard',
-            builder: (context, state) =>
-                const SizedBox(), // default content (optional)
+            pageBuilder: (context, state) {
+              final email = state.uri.queryParameters['email'] ?? '';
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: CourseContentView(email: email),
+              );
+            },
           ),
           GoRoute(
             path: '/dashboard/admin/students',
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final email = state.uri.queryParameters['email'] ?? '';
-              return ManageStudentsView(email: email);
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: ManageStudentsView(email: email),
+              );
             },
           ),
           GoRoute(
             path: '/dashboard/admin/students/register',
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final email = state.uri.queryParameters['email'] ?? '';
-              return RegisterStudentView(email: email);
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: RegisterStudentView(email: email),
+              );
             },
           ),
         ],
