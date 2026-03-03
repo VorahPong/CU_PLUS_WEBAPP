@@ -1,8 +1,10 @@
+import 'package:cu_plus_webapp/features/admin/ui/calender_view.dart';
 import 'package:cu_plus_webapp/features/admin/ui/manage_students_view.dart';
+import 'package:cu_plus_webapp/features/admin/ui/message_view.dart';
 import 'package:cu_plus_webapp/features/admin/ui/register_student_view.dart';
 import 'package:cu_plus_webapp/features/auth/ui/login_page.dart';
 import 'package:cu_plus_webapp/features/dashboard/ui/dashboard_shell.dart';
-import 'package:cu_plus_webapp/features/students/ui/course_content_view.dart';
+import 'package:cu_plus_webapp/features/admin/ui/course_content_view.dart';
 import 'package:flutter/material.dart';
 import 'features/auth/ui/first_page.dart';
 import 'package:go_router/go_router.dart';
@@ -19,17 +21,27 @@ class MyApp extends StatelessWidget {
       GoRoute(
         path: '/',
         pageBuilder: (context, state) {
-          return CustomTransitionPage(key: state.pageKey, child: FirstPage(), transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          });
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: FirstPage(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+          );
         },
       ),
       GoRoute(
         path: '/login',
         pageBuilder: (context, state) {
-          return CustomTransitionPage(key: state.pageKey, child: const LoginPage(), transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          });
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: const LoginPage(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+          );
         },
       ),
       // Everything under /dashboard keeps sidebar
@@ -70,6 +82,26 @@ class MyApp extends StatelessWidget {
               return NoTransitionPage(
                 key: state.pageKey,
                 child: RegisterStudentView(email: email),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/admin/calendar',
+            pageBuilder: (context, state) {
+              final email = state.uri.queryParameters['email'] ?? '';
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: CalenderView(email: email),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/message',
+            pageBuilder: (context, state) {
+              final email = state.uri.queryParameters['email'] ?? '';
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: MessageView(email: email),
               );
             },
           ),
