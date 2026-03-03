@@ -17,20 +17,17 @@ class NavBar extends StatelessWidget implements PreferredSizeWidget {
   final bool automaticallyImplyLeading;
 
   @override
-  Size get preferredSize => const Size.fromHeight(71); 
+  Size get preferredSize => const Size.fromHeight(60);
 
   @override
   Widget build(BuildContext context) {
-    final Widget? computedLeading =
-        showMenu
-            ? IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: onMenuPressed,
-              )
-            : null;
+    final Widget? computedLeading = showMenu
+        ? IconButton(icon: const Icon(Icons.menu), onPressed: onMenuPressed)
+        : null;
     return AppBar(
       toolbarHeight: 71,
       automaticallyImplyLeading: automaticallyImplyLeading,
+      centerTitle: false,
       title: const Image(
         image: AssetImage('assets/images/cameron_logo2.png'),
         height: 34,
@@ -38,6 +35,13 @@ class NavBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: Colors.white,
       foregroundColor: const Color(0xFF111928),
       elevation: 0,
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(
+          color: Colors.grey.shade300,
+          height: 2,
+        ),
+      ),
       leading: computedLeading,
       actions: [
         Padding(
@@ -50,9 +54,7 @@ class NavBar extends StatelessWidget implements PreferredSizeWidget {
                 onPressed: () {},
               ),
               const SizedBox(width: 10),
-              const CircleAvatar(
-                child: Icon(Icons.person, size: 20),
-              ),
+              const CircleAvatar(child: Icon(Icons.person, size: 20)),
               const SizedBox(width: 8),
               Text(
                 username,

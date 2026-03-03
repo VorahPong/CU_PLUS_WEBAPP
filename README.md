@@ -113,15 +113,54 @@ CU_PLUS_WEBAPP/
 │   ├── core/
 │   │   ├── config/            # Global constants (API base URLs, themes, etc.)
 │   │   └── network/           # ApiClient and shared HTTP helpers
+│   │
 │   ├── features/
-│   │   └── auth/
-│   │       ├── api/           # API wrappers (e.g., auth_api.dart)
-│   │       └── ui/            # Screens/widgets (LoginPage, HomePage, etc.)
-│   └── main.dart              # App entry point
+│   │   ├── auth/              # Authentication feature
+│   │   │   ├── api/           # Auth API wrappers (auth_api.dart)
+│   │   │   └── ui/            # LoginPage, FirstPage, etc.
+│   │   │
+│   │   ├── dashboard/         # Dashboard shell & layout
+│   │   │   ├── ui/
+│   │   │   │   ├── dashboard_shell.dart
+│   │   │   │   └── widgets/   # Sidebar, top bar, etc.
+│   │   │
+│   │   ├── admin/             # Admin-specific features
+│   │   │   ├── api/
+│   │   │   └── ui/
+│   │   │       ├── manage_students_view.dart
+│   │   │       └── register_student_view.dart
+│   │   │
+│   │   └── students/          # Student-specific features
+│   │       ├── api/
+│   │       └── ui/
+│   │           ├── course_content_view.dart
+│   │           ├── message_view.dart
+│   │           └── calendar_view.dart
+│   │
+│   └── main.dart              # App entry point + router setup
+│
 ├── assets/                    # Images, icons, fonts
 ├── pubspec.yaml               # Dependencies and asset declarations
 └── README.md
 ```
+
+
+## 🧩 Architecture Overview
+
+This project follows a **feature-based architecture**:
+
+- Each feature is self-contained.
+- API logic lives inside `api/`.
+- UI screens live inside `ui/`.
+- Shared utilities live inside `core/`.
+
+This structure ensures:
+- Scalability
+- Maintainability
+- Clean separation of concerns
+- Easier onboarding for contributors
+
+---
 
 ### Add More API Calls
 - Create a new api method inside the relevant `features/<feature>/api/*.dart` file.
@@ -130,8 +169,22 @@ CU_PLUS_WEBAPP/
 
 ### Add New UI Pages
 - Create a widget file inside `features/<feature>/ui/`, following the existing naming convention (e.g., `settings_page.dart`).
-- Wire navigation from the appropriate screen using `Navigator.push`/`pushReplacement`.
 - Share common widgets via a dedicated `widgets/` subfolder if a feature grows.
+
+## 🌐 Routing (GoRouter)
+
+The app uses `go_router` for:
+
+- Nested routing
+- Web URL support
+- Deep linking
+- Dashboard shell wrapping
+
+### Example Routes
+- /login
+- /dashboard
+- /dashboard/admin/students
+- /dashboard/admin/students/register
 
 ### Quick Tips
 - Register new features by importing them in `main.dart` or the relevant coordinator widget.

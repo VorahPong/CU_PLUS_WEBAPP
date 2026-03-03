@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-enum SidebarItem { course, message, calendar, support, setting }
+enum SidebarItem { courseContent, message, calendar, manageStudents, support, setting }
 
 class Sidebar extends StatelessWidget {
   const Sidebar({
@@ -20,7 +20,8 @@ Widget _item({
   required SidebarItem item,
   required String title,
   required String iconPath,
-  double iconSize = 22, // default size
+  double iconSize = 22,
+  void Function()? onTap, 
 }) {
   final isActive = selectedItem == item;
 
@@ -37,9 +38,7 @@ Widget _item({
           curve: Curves.easeOut,
           margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
           padding: const EdgeInsets.symmetric(vertical: 4),
-          transform: isHover
-              ? (Matrix4.identity()..scale(1.03))
-              : Matrix4.identity(),
+          transform: Matrix4.identity(),
           decoration: BoxDecoration(
             color: (isActive || isHover) ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
@@ -72,7 +71,7 @@ Widget _item({
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
-            onTap: () => onSelect(item),
+            onTap: onTap ?? () => onSelect(item),
           ),
         ),
       );
@@ -90,7 +89,7 @@ Widget _item({
         children: [
           _item(
             context: context,
-            item: SidebarItem.course,
+            item: SidebarItem.courseContent,
             title: "Course Content",
             iconPath: 'assets/images/side-bar/book-icon.svg',
             iconSize: 20,
@@ -107,6 +106,13 @@ Widget _item({
             item: SidebarItem.calendar,
             title: "Calendar",
             iconPath: 'assets/images/side-bar/calender-icon.svg',
+            iconSize: 28,
+          ),
+          _item(
+            context: context,
+            item: SidebarItem.manageStudents,
+            title: "Manage Students",
+            iconPath: 'assets/images/side-bar/student-icon.svg',
             iconSize: 28,
           ),
 

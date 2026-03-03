@@ -1,27 +1,57 @@
 import 'package:flutter/material.dart';
-import './components/side_bar.dart';
-import 'package:cu_plus_webapp/features/dashboard/components/top_nav_bar.dart';
+import 'package:go_router/go_router.dart';
+import '../widgets/side_bar.dart';
+import '../widgets/top_nav_bar.dart';
 
-class CourseContentPage extends StatefulWidget {
-  const CourseContentPage({super.key, required this.email});
+class DashboardShell extends StatefulWidget {
+  const DashboardShell({super.key, required this.email, required this.child});
+
   final String email;
-
+  final Widget child;
   @override
-  State<CourseContentPage> createState() => _CourseContentState();
+  State<DashboardShell> createState() => _DashboardShellState();
 }
 
-class _CourseContentState extends State<CourseContentPage> {
+class _DashboardShellState extends State<DashboardShell> {
   bool _showSidebar = false;
-  SidebarItem _selectedItem = SidebarItem.course;
+  late SidebarItem _selectedItem;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedItem = SidebarItem.courseContent;
+  }
 
   void _selectItem(SidebarItem item, {required bool isDesktop}) {
     setState(() {
       _selectedItem = item;
-      if (!isDesktop) _showSidebar = false; // close drawer on mobile
+      if (!isDesktop) _showSidebar = false;
     });
 
-    // TODO: navigate based on item
+    // ✅ route based on item
+    switch (item) {
+      case SidebarItem.courseContent:
+        context.go('/dashboard'); // or /dashboard/course-content
+        break;
+      case SidebarItem.message:
+        context.go('/dashboard/message');
+        break;
+      case SidebarItem.calendar:
+        context.go('/dashboard/admin/calendar');
+        break;
+      case SidebarItem.manageStudents:
+        context.go('/dashboard/admin/students');
+        break;
+      case SidebarItem.support:
+        context.go('/dashboard/support');
+        break;
+      case SidebarItem.setting:
+        context.go('/dashboard/setting');
+        break;
+    }
   }
+
+  int _indexFor(SidebarItem item) => SidebarItem.values.indexOf(item);
 
   @override
   Widget build(BuildContext context) {
@@ -29,16 +59,33 @@ class _CourseContentState extends State<CourseContentPage> {
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 900;
 
-        // If we switch to desktop while sidebar was open on mobile, close it
         if (isDesktop && _showSidebar) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) setState(() => _showSidebar = false);
           });
         }
 
-        final pageContent = Center(
-          child: Text("Logged in as: ${widget.email}"),
-        );
+        final content = widget.child;
+
+        final loc = GoRouterState.of(context).uri.toString();
+
+        final SidebarItem routeItem;
+        if (loc.startsWith('/dashboard/admin/students')) {
+          routeItem = SidebarItem.manageStudents;
+        } else if (loc.startsWith('/dashboard/message')) {
+          routeItem = SidebarItem.message;
+        } else if (loc.startsWith('/dashboard/admin/calendar')) {
+          routeItem = SidebarItem.calendar;
+        } else if (loc.startsWith('/dashboard/support')) {
+          routeItem = SidebarItem.support;
+        } else if (loc.startsWith('/dashboard/setting')) {
+          routeItem = SidebarItem.setting;
+        } else {
+          routeItem = SidebarItem.courseContent;
+        }
+
+        // keep UI in sync with URL (without setState)
+        _selectedItem = routeItem;
 
         return Scaffold(
           appBar: NavBar(
@@ -48,7 +95,6 @@ class _CourseContentState extends State<CourseContentPage> {
             //\automaticallyImplyLeading: false,
           ),
           body: isDesktop
-              // Desktop layout: sidebar always visible
               ? Row(
                   children: [
                     SizedBox(
@@ -57,21 +103,17 @@ class _CourseContentState extends State<CourseContentPage> {
                         selectedItem: _selectedItem,
                         onSelect: (item) => _selectItem(item, isDesktop: true),
                         onLogout: () {
-                          // TODO: clear token + navigate to login
+                          context.go('/login');
                         },
                       ),
                     ),
-                    const VerticalDivider(width: 0, thickness: 0),
-                    Expanded(child: pageContent),
+                    Expanded(child: content),
                   ],
                 )
-              // Mobile layout: overlay drawer
               : Stack(
                   children: [
-                    // Main content
-                    Center(child: Text("Logged in as: ${widget.email}")),
+                    Positioned.fill(child: content),
 
-                    // Backdrop (tap to close)
                     IgnorePointer(
                       ignoring: !_showSidebar,
                       child: AnimatedOpacity(
@@ -86,7 +128,6 @@ class _CourseContentState extends State<CourseContentPage> {
                       ),
                     ),
 
-                    // Sliding sidebar
                     Align(
                       alignment: Alignment.centerLeft,
                       child: AnimatedSlide(
@@ -102,14 +143,11 @@ class _CourseContentState extends State<CourseContentPage> {
                             width: double.infinity,
                             child: Sidebar(
                               selectedItem: _selectedItem,
-                              onSelect: (item) {
-                                setState(() {
-                                  _selectedItem = item;
-                                  _showSidebar = false;
-                                });
-                              },
+                              onSelect: (item) =>
+                                  _selectItem(item, isDesktop: false),
                               onLogout: () {
                                 setState(() => _showSidebar = false);
+                                context.go('/login');
                               },
                             ),
                           ),

@@ -1,11 +1,9 @@
 import 'package:cu_plus_webapp/features/auth/ui/first_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/network/api_client.dart';
 import '../api/auth_api.dart';
-import '../../dashboard/course_content_page.dart';
-import './first_page.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -62,27 +60,9 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      // popup
-      await showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text("Success"),
-          content: const Text("Login successful!"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("OK"),
-            ),
-          ],
-        ),
-      );
-
       // navigate
       if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        CupertinoPageRoute(builder: (_) => CourseContentPage(email: email)),
-      );
+      context.go("/dashboard?email=$email");
 
       final token = (res["token"] ?? "").toString();
       setState(() {
@@ -191,8 +171,9 @@ class _LoginPageState extends State<LoginPage> {
                                 validator: (v) {
                                   final s = (v ?? "").trim();
                                   if (s.isEmpty) return "Email is required";
-                                  if (!s.contains("@"))
+                                  if (!s.contains("@")) {
                                     return "Enter a valid email";
+                                  }
                                   return null;
                                 },
                                 style: const TextStyle(color: Colors.black),
@@ -269,10 +250,12 @@ class _LoginPageState extends State<LoginPage> {
                                   }
                                 },
                                 validator: (v) {
-                                  if ((v ?? "").isEmpty)
+                                  if ((v ?? "").isEmpty) {
                                     return "Password is required";
-                                  if ((v ?? "").length < 6)
+                                  }
+                                  if ((v ?? "").length < 6) {
                                     return "Min 6 characters";
+                                  }
                                   return null;
                                 },
                                 style: const TextStyle(color: Colors.black),
@@ -412,7 +395,7 @@ class _LoginPageState extends State<LoginPage> {
                           SizedBox(
                             width: 150,
                             child: ElevatedButton(
-                              onPressed: () => Navigator.pop(context),
+                              onPressed: () => context.go('/'), // back to first page
                               style:
                                   ElevatedButton.styleFrom(
                                     backgroundColor: Color.fromARGB(
