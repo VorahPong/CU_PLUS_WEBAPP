@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import './components/side_bar.dart';
+import 'package:cu_plus_webapp/features/dashboard/components/top_nav_bar.dart';
 
 class CourseContentPage extends StatefulWidget {
   const CourseContentPage({super.key, required this.email});
@@ -40,18 +41,12 @@ class _CourseContentState extends State<CourseContentPage> {
         );
 
         return Scaffold(
-          appBar: AppBar(
-            automaticallyImplyLeading: false,
-            title: const Text("Dashboard"),
-            leading: isDesktop
-                ? null
-                : IconButton(
-                    icon: const Icon(Icons.menu),
-                    onPressed: () =>
-                        setState(() => _showSidebar = !_showSidebar),
-                  ),
+          appBar: NavBar(
+            showMenu: !isDesktop,
+            onMenuPressed: () => setState(() => _showSidebar = !_showSidebar),
+            username: widget.email,
+            //\automaticallyImplyLeading: false,
           ),
-
           body: isDesktop
               // Desktop layout: sidebar always visible
               ? Row(
