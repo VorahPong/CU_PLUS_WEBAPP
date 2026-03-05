@@ -11,7 +11,7 @@ class ManageStudentsView extends StatefulWidget {
 }
 
 class _ManageStudentsViewState extends State<ManageStudentsView> {
-  // Check if role is admin otherwise kick out of this page
+  // TODO: fetch students from backend and display in table
 
   bool _showFilter = false;
 
@@ -66,6 +66,158 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
   void _setFilter(VoidCallback fn) {
     setState(fn);
     _filterEntry?.markNeedsBuild();
+  }
+
+  // ----------------------
+  // Actions overlay
+  // ----------------------
+  OverlayEntry? _actionEntry;
+  LayerLink? _activeActionLink; // which row was clicked
+
+  void _toggleActionOverlay(LayerLink link) {
+    if (_actionEntry != null) {
+      _hideActionOverlay();
+      // if user clicked a different row, open again at new position
+      if (_activeActionLink != link) {
+        _activeActionLink = link;
+        _showActionOverlay();
+      }
+    } else {
+      _activeActionLink = link;
+      _showActionOverlay();
+    }
+  }
+
+  void _showActionOverlay() {
+    final link = _activeActionLink;
+    if (link == null) return;
+
+    _actionEntry = OverlayEntry(
+      builder: (context) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: _hideActionOverlay,
+                child: const SizedBox(),
+              ),
+            ),
+
+            CompositedTransformFollower(
+              link: link,
+              showWhenUnlinked: false,
+              offset: const Offset(-120, 36), // 👈 tweak to align under "...".
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: 160,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.grey.shade300, width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.12),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _actionItem(
+                        icon: Icons.visibility_outlined,
+                        label: "View",
+                        onTap: () {
+                          _hideActionOverlay();
+                          // TODO: view action
+                        },
+                      ),
+                      _divider(),
+                      _actionItem(
+                        icon: Icons.edit_outlined,
+                        label: "Edit",
+                        onTap: () {
+                          _hideActionOverlay();
+                          // TODO: edit action
+                        },
+                      ),
+                      _divider(),
+                      _actionItem(
+                        icon: Icons.delete_outline,
+                        label: "Delete",
+                        isDanger: true,
+                        onTap: () {
+                          _hideActionOverlay();
+                          // TODO: delete action
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_actionEntry!);
+  }
+
+  void _hideActionOverlay() {
+    _actionEntry?.remove();
+    _actionEntry = null;
+    _activeActionLink = null;
+  }
+
+  Widget _actionsCell() {
+    final link = LayerLink(); // ✅ unique per cell
+
+    return CompositedTransformTarget(
+      link: link,
+      child: IconButton(
+        icon: const Icon(Icons.more_horiz),
+        tooltip: "Actions",
+        onPressed: () => _toggleActionOverlay(link),
+      ),
+    );
+  }
+
+  Widget _divider() =>
+      Divider(height: 1, thickness: 1, color: Colors.grey.shade200);
+
+  Widget _actionItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool isDanger = false,
+  }) {
+    final color = isDanger ? Colors.red : const Color(0xFF111928);
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showFilterOverlay() {
@@ -177,6 +329,7 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
   @override
   void dispose() {
     _hideFilterOverlay();
+    _hideActionOverlay();
     super.dispose();
   }
 
@@ -389,14 +542,14 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                                             ),
                                           ),
                                         ],
-                                        rows: const [
+                                        rows: [
                                           DataRow(
                                             cells: [
                                               DataCell(Text("2026001")),
                                               DataCell(Text("Jane Smith")),
                                               DataCell(Text("jane@school.edu")),
                                               DataCell(Text("1st Year")),
-                                              DataCell(Text("...")),
+                                              DataCell(_actionsCell()),
                                             ],
                                           ),
                                           DataRow(
@@ -405,7 +558,7 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                                               DataCell(Text("Alex Brown")),
                                               DataCell(Text("alex@school.edu")),
                                               DataCell(Text("2nd Year")),
-                                              DataCell(Text("...")),
+                                              DataCell(_actionsCell()),
                                             ],
                                           ),
                                         ],
