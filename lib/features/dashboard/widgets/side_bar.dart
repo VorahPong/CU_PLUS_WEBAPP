@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-enum SidebarItem { courseContent, message, calendar, manageStudents, support, setting }
+enum SidebarItem {
+  courseContent,
+  message,
+  calendar,
+  manageStudents,
+  support,
+  setting,
+}
 
 class Sidebar extends StatelessWidget {
   const Sidebar({
@@ -9,75 +16,77 @@ class Sidebar extends StatelessWidget {
     required this.selectedItem,
     required this.onSelect,
     required this.onLogout,
+    required this.isAdmin,
   });
 
   final SidebarItem selectedItem;
   final void Function(SidebarItem item) onSelect;
   final VoidCallback onLogout;
+  final bool isAdmin;
 
-Widget _item({
-  required BuildContext context,
-  required SidebarItem item,
-  required String title,
-  required String iconPath,
-  double iconSize = 22,
-  void Function()? onTap, 
-}) {
-  final isActive = selectedItem == item;
+  Widget _item({
+    required BuildContext context,
+    required SidebarItem item,
+    required String title,
+    required String iconPath,
+    double iconSize = 22,
+    void Function()? onTap,
+  }) {
+    final isActive = selectedItem == item;
 
-  return StatefulBuilder(
-    builder: (context, setLocalState) {
-      bool isHover = false;
+    return StatefulBuilder(
+      builder: (context, setLocalState) {
+        bool isHover = false;
 
-      return MouseRegion(
-        cursor: SystemMouseCursors.click,
-        onEnter: (_) => setLocalState(() => isHover = true),
-        onExit: (_) => setLocalState(() => isHover = false),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          curve: Curves.easeOut,
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          transform: Matrix4.identity(),
-          decoration: BoxDecoration(
-            color: (isActive || isHover) ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: (isActive || isHover)
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : [],
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-            leading: SizedBox(
-              width: 28,
-              height: 28,
-              child: Center(
-                child: SvgPicture.asset(
-                  iconPath,
-                  width: iconSize,
-                  height: iconSize,
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setLocalState(() => isHover = true),
+          onExit: (_) => setLocalState(() => isHover = false),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOut,
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            transform: Matrix4.identity(),
+            decoration: BoxDecoration(
+              color: (isActive || isHover) ? Colors.white : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: (isActive || isHover)
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.12),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : [],
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              leading: SizedBox(
+                width: 28,
+                height: 28,
+                child: Center(
+                  child: SvgPicture.asset(
+                    iconPath,
+                    width: iconSize,
+                    height: iconSize,
+                  ),
                 ),
               ),
-            ),
-            title: Text(
-              title,
-              style: TextStyle(
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+              title: Text(
+                title,
+                style: TextStyle(
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                ),
               ),
+              onTap: onTap ?? () => onSelect(item),
             ),
-            onTap: onTap ?? () => onSelect(item),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,18 +117,20 @@ Widget _item({
             iconPath: 'assets/images/side-bar/calender-icon.svg',
             iconSize: 28,
           ),
-          _item(
-            context: context,
-            item: SidebarItem.manageStudents,
-            title: "Manage Students",
-            iconPath: 'assets/images/side-bar/student-icon.svg',
-            iconSize: 28,
-          ),
+          if (isAdmin) ...[
+            _item(
+              context: context,
+              item: SidebarItem.manageStudents,
+              title: "Manage Students",
+              iconPath: 'assets/images/side-bar/student-icon.svg',
+              iconSize: 28,
+            ),
+          ],
 
           const Spacer(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Divider(color: Color(0xFF99C199), thickness:1),
+            child: Divider(color: Color(0xFF99C199), thickness: 1),
           ),
 
           _item(

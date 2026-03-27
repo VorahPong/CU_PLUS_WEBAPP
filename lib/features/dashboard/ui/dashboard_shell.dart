@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/side_bar.dart';
 import '../widgets/top_nav_bar.dart';
+import '../../../core/extensions/auth_extension.dart';
 
 class DashboardShell extends StatefulWidget {
-  const DashboardShell({super.key, required this.email, required this.child});
+  const DashboardShell({super.key, required this.child});
 
-  final String email;
   final Widget child;
   @override
   State<DashboardShell> createState() => _DashboardShellState();
@@ -28,7 +28,7 @@ class _DashboardShellState extends State<DashboardShell> {
       if (!isDesktop) _showSidebar = false;
     });
 
-    // ✅ route based on item
+    // route based on item
     switch (item) {
       case SidebarItem.courseContent:
         context.go('/dashboard'); // or /dashboard/course-content
@@ -57,6 +57,10 @@ class _DashboardShellState extends State<DashboardShell> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final auth = context.auth;
+        final isAdmin = auth.isAdmin;
+        final email = auth.user?.email ?? "";
+
         final isDesktop = constraints.maxWidth >= 900;
 
         if (isDesktop && _showSidebar) {
@@ -91,7 +95,7 @@ class _DashboardShellState extends State<DashboardShell> {
           appBar: NavBar(
             showMenu: !isDesktop,
             onMenuPressed: () => setState(() => _showSidebar = !_showSidebar),
-            username: widget.email,
+            username: email,
             //\automaticallyImplyLeading: false,
           ),
           body: isDesktop
@@ -101,8 +105,11 @@ class _DashboardShellState extends State<DashboardShell> {
                       width: 262,
                       child: Sidebar(
                         selectedItem: _selectedItem,
+                        isAdmin: isAdmin,
                         onSelect: (item) => _selectItem(item, isDesktop: true),
                         onLogout: () {
+                          final auth = context.authRead;
+                          auth.logout();
                           context.go('/login');
                         },
                       ),
@@ -143,10 +150,13 @@ class _DashboardShellState extends State<DashboardShell> {
                             width: double.infinity,
                             child: Sidebar(
                               selectedItem: _selectedItem,
+                              isAdmin: isAdmin,
                               onSelect: (item) =>
                                   _selectItem(item, isDesktop: false),
                               onLogout: () {
                                 setState(() => _showSidebar = false);
+                                final auth = context.authRead;
+                                auth.logout();
                                 context.go('/login');
                               },
                             ),

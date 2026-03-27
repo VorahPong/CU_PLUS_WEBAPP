@@ -1,4 +1,3 @@
-import '../../../core/config/api_config.dart';
 import '../../../core/network/api_client.dart';
 
 class AuthApi {
@@ -10,7 +9,7 @@ class AuthApi {
     required String password,
   }) {
     return _api.postJson(
-      "${ApiConfig.baseUrl}/auth/login",
+      "/auth/login",
       {"email": email, "password": password},
     );
   }

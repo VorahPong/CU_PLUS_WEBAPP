@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../core/network/api_client.dart';
+import '../api/student_api.dart';
+import 'package:provider/provider.dart';
+import '../../../features/auth/controller/auth_controller.dart';
 
 class RegisterStudentView extends StatefulWidget {
   const RegisterStudentView({super.key, required this.email});
@@ -23,6 +27,9 @@ class _RegisterStudentViewState extends State<RegisterStudentView> {
   bool _hidePassword = true;
   bool _hideConfirmPassword = true;
 
+  bool _loading = false;
+  String? _error;
+
   @override
   void dispose() {
     _emailCtrl.dispose();
@@ -34,17 +41,52 @@ class _RegisterStudentViewState extends State<RegisterStudentView> {
     super.dispose();
   }
 
-  void _onSubmit() {
+  Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // TODO: call API to register student
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Register student (placeholder)")),
-    );
+    final client = context.read<ApiClient>();
+    final studentApi = StudentApi(client);
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      await studentApi.createStudent(
+        firstName: _firstNameCtrl.text.trim(),
+        lastName: _lastNameCtrl.text.trim(),
+        email: _emailCtrl.text.trim(),
+        password: _passCtrl.text,
+        schoolId: _schoolIdCtrl.text.trim(),
+        year: _year!,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Student created successfully")),
+      );
+
+      // go back
+      // context.go('/dashboard/admin/students');
+    } catch (e) {
+      setState(() {
+        _error = e.toString().replaceFirst("Exception: ", "");
+      });
+    } finally {
+      setState(() => _loading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthController>();
+
+    if (!auth.isAdmin) {
+      return const Center(child: Text("Access denied"));
+    }
+
     final isMobile = MediaQuery.of(context).size.width < 700;
 
     return Padding(
@@ -164,10 +206,18 @@ class _RegisterStudentViewState extends State<RegisterStudentView> {
                       ),
                     ),
                     // ✅ Submit button bottom-right
+                    if (_error != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          _error!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
                     Align(
                       alignment: Alignment.centerRight,
                       child: ElevatedButton(
-                        onPressed: _onSubmit,
+                        onPressed: _loading ? null : _onSubmit,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFFFC425),
                           foregroundColor: Colors.black,
@@ -359,7 +409,8 @@ class _RegisterStudentViewState extends State<RegisterStudentView> {
                 _hideConfirmPassword ? Icons.visibility_off : Icons.visibility,
                 color: const Color(0xFF6B7280),
               ),
-              onPressed: () => setState(() => _hideConfirmPassword = !_hideConfirmPassword),
+              onPressed: () =>
+                  setState(() => _hideConfirmPassword = !_hideConfirmPassword),
             ),
           ),
         ),

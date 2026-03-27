@@ -162,6 +162,143 @@ This structure ensures:
 
 ---
 
+## 🔐 Authentication & Session Management
+
+The app uses a centralized authentication system powered by `Provider`.
+
+### Key Concepts
+- `AuthController` stores the current user session
+- `ApiClient` stores the JWT token after login
+- The token is automatically attached to all API requests
+
+### Login Flow
+1. User logs in via `/auth/login`
+2. Backend returns `{ user, token }`
+3. Frontend stores:
+   - `user` → in `AuthController`
+   - `token` → in `ApiClient`
+4. User is redirected to `/dashboard`
+
+---
+
+## 🧠 Global State (Provider)
+
+We use `MultiProvider` in `main.dart`:
+
+```dart
+MultiProvider(
+  providers: [
+    Provider<ApiClient>(create: (_) => ApiClient()),
+    ChangeNotifierProvider<AuthController>(
+      create: (_) => AuthController(),
+    ),
+  ],
+)
+```
+
+### Why this matters
+- `ApiClient` is shared globally → keeps token consistent
+- `AuthController` notifies UI when login/logout changes
+
+---
+
+## 🌐 API Configuration
+
+All API URLs are centralized in:
+
+```
+lib/core/config/api_config.dart
+```
+
+```dart
+class ApiConfig {
+  static const String baseUrl = "http://localhost:4000";
+}
+```
+
+### Important Rule
+- NEVER hardcode full URLs in API files
+- Always use **paths only**:
+
+```dart
+postJson("/auth/login", body);
+```
+
+The `ApiClient` automatically prepends the base URL.
+
+---
+
+## 🔌 ApiClient Usage
+
+Located at:
+
+```
+lib/core/network/api_client.dart
+```
+
+### Responsibilities
+- Attach authentication token
+- Handle headers
+- Handle JSON parsing
+- Provide helper methods:
+  - `postJson`
+  - `getJson`
+  - `deleteJson`
+
+### Example
+
+```dart
+final client = context.read<ApiClient>();
+await client.postJson("/admin/students", {...});
+```
+
+---
+
+## 🔒 Route Protection (GoRouter)
+
+Routing is protected using `redirect` logic in `main.dart`.
+
+### Behavior
+- Not logged in → redirected to `/login`
+- Logged in → redirected away from `/login`
+- Non-admin → blocked from `/dashboard/admin/*`
+
+---
+
+## 🛡 Role-Based Access Control
+
+### Backend
+Protected routes use:
+
+```js
+requireAuth, requireAdmin
+```
+
+### Frontend
+- UI hides admin-only features for students
+- Pages double-check access using `AuthController`
+
+### Example
+
+```dart
+final auth = context.watch<AuthController>();
+
+if (!auth.isAdmin) {
+  return Center(child: Text("Access denied"));
+}
+```
+
+---
+
+## 📌 Important Development Rules
+
+- Always use shared `ApiClient` from Provider
+- Never create `ApiClient()` manually inside widgets
+- Keep API paths clean (`/auth/login`, NOT full URLs)
+- Protect admin routes both frontend and backend
+
+---
+
 ### Add More API Calls
 - Create a new api method inside the relevant `features/<feature>/api/*.dart` file.
 - Use `ApiClient` from `lib/core/network/api_client.dart` to keep authentication headers and base URLs consistent.
