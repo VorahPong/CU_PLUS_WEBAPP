@@ -28,13 +28,7 @@ class _LoginPageState extends State<LoginPage> {
   String? _error;
   String? _tokenPreview;
 
-  late final AuthApi _authApi;
 
-  @override
-  void initState() {
-    super.initState();
-    _authApi = AuthApi(ApiClient());
-  }
 
   @override
   void dispose() {
@@ -52,9 +46,11 @@ class _LoginPageState extends State<LoginPage> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _loading = true);
+    final client = context.read<ApiClient>();
+    final authApi = AuthApi(client);
 
     try {
-      final res = await _authApi.login(
+      final res = await authApi.login(
         email: _emailCtrl.text.trim(),
         password: _passCtrl.text,
       );
@@ -75,14 +71,14 @@ class _LoginPageState extends State<LoginPage> {
       // Store in AuthController
       final auth = context.read<AuthController>();
       auth.setUser(user);
+      final token = (res["token"] ?? "").toString();
+      client.setToken(token);
 
       if (!mounted) return;
 
       // Navigate WITHOUT passing email
       context.go("/dashboard");
 
-      // debug token preview
-      final token = (res["token"] ?? "").toString();
       setState(() {
         _tokenPreview = token.isEmpty
             ? "(no token returned)"

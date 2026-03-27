@@ -12,11 +12,19 @@ import 'package:go_router/go_router.dart';
 
 import 'package:provider/provider.dart';
 import 'features/auth/controller/auth_controller.dart';
+import 'package:cu_plus_webapp/core/network/api_client.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AuthController(),
+    MultiProvider(
+      providers: [
+        Provider<ApiClient>(
+          create: (_) => ApiClient(),
+        ),
+        ChangeNotifierProvider<AuthController>(
+          create: (_) => AuthController(),
+        ),
+      ],
       child: const MyApp(),
     ),
   );
