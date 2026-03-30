@@ -1,16 +1,20 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/browser_client.dart';
 import '../config/api_config.dart';
 
 class ApiClient {
-  ApiClient({http.Client? client}) : _client = client ?? http.Client();
+  ApiClient({http.Client? client}) : _client = client ?? _buildClient();
 
   final http.Client _client;
 
-  String? _token;
-
-  void setToken(String? token) {
-    _token = token;
+  static http.Client _buildClient() {
+    if (kIsWeb) {
+      final client = BrowserClient()..withCredentials = true;
+      return client;
+    }
+    return http.Client();
   }
 
   Future<Map<String, dynamic>> postJson(
@@ -19,7 +23,9 @@ class ApiClient {
   ) async {
     final res = await _client.post(
       Uri.parse('${ApiConfig.baseUrl}$path'),
-      headers: _headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: jsonEncode(body),
     );
 
@@ -29,7 +35,9 @@ class ApiClient {
   Future<Map<String, dynamic>> getJson(String path) async {
     final res = await _client.get(
       Uri.parse('${ApiConfig.baseUrl}$path'),
-      headers: _headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     );
 
     return _handleResponse(res);
@@ -38,18 +46,12 @@ class ApiClient {
   Future<Map<String, dynamic>> deleteJson(String path) async {
     final res = await _client.delete(
       Uri.parse('${ApiConfig.baseUrl}$path'),
-      headers: _headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     );
 
     return _handleResponse(res);
-  }
-
-  Map<String, String> get _headers {
-    return {
-      'Content-Type': 'application/json',
-      if (_token != null && _token!.isNotEmpty)
-        'Authorization': 'Bearer $_token',
-    };
   }
 
   Map<String, dynamic> _handleResponse(http.Response res) {
@@ -62,6 +64,7 @@ class ApiClient {
     final msg = (decoded is Map && decoded['message'] != null)
         ? decoded['message'].toString()
         : 'Request failed (${res.statusCode})';
+
     throw Exception(msg);
   }
 }

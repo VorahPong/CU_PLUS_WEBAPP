@@ -69,21 +69,11 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       // Store in AuthController
-      final auth = context.read<AuthController>();
-      auth.setUser(user);
-      final token = (res["token"] ?? "").toString();
-      client.setToken(token);
+      context.read<AuthController>().setUser(user);
 
       if (!mounted) return;
-
-      // Navigate WITHOUT passing email
       context.go("/dashboard");
 
-      setState(() {
-        _tokenPreview = token.isEmpty
-            ? "(no token returned)"
-            : "${token.substring(0, token.length > 25 ? 25 : token.length)}...";
-      });
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst("Exception: ", ""));
     } finally {
