@@ -11,18 +11,22 @@ import 'features/auth/ui/first_page.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:provider/provider.dart';
-import 'features/auth/controller/auth_controller.dart';
 import 'package:cu_plus_webapp/core/network/api_client.dart';
+import 'package:cu_plus_webapp/features/auth/controller/auth_controller.dart';
+import 'package:cu_plus_webapp/features/auth/api/auth_api.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
-        Provider<ApiClient>(
-          create: (_) => ApiClient(),
+        Provider<ApiClient>(create: (_) => ApiClient()),
+        ProxyProvider<ApiClient, AuthApi>(
+          update: (_, client, __) => AuthApi(client),
         ),
-        ChangeNotifierProvider<AuthController>(
-          create: (_) => AuthController(),
+        ChangeNotifierProxyProvider<AuthApi, AuthController>(
+          create: (context) => AuthController(context.read<AuthApi>()),
+          update: (_, authApi, authController) =>
+              authController ?? AuthController(authApi),
         ),
       ],
       child: const MyApp(),
@@ -30,7 +34,7 @@ void main() {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   // Define router here
@@ -93,9 +97,7 @@ class MyApp extends StatelessWidget {
       ),
       ShellRoute(
         builder: (context, state, child) {
-          return DashboardShell(
-            child: child,
-          );
+          return DashboardShell(child: child);
         },
         routes: [
           GoRoute(
@@ -154,11 +156,23 @@ class MyApp extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) {
+  State<MyApp> createState() => _MyAppState();
+}
 
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthController>().loadSession();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
-    final router = _createRouter(auth);
-    
+    final router = MyApp._createRouter(auth);
+
     return MaterialApp.router(
       routerConfig: router,
       debugShowCheckedModeBanner: false,
