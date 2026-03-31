@@ -164,12 +164,12 @@ This structure ensures:
 
 ## 🔐 Authentication & Session Management
 
-The app uses a centralized authentication system powered by `Provider`.
+Authentication is handled via **JWT + Provider + persistent session restore**.
 
 ### Key Concepts
-- `AuthController` stores the current user session
-- `ApiClient` stores the JWT token after login
-- The token is automatically attached to all API requests
+- `AuthController` holds the current user + session state
+- `ApiClient` stores the JWT token and attaches it to every request
+- Session is **persisted locally** and restored on app start
 
 ### Login Flow
 1. User logs in via `/auth/login`
@@ -177,7 +177,20 @@ The app uses a centralized authentication system powered by `Provider`.
 3. Frontend stores:
    - `user` → in `AuthController`
    - `token` → in `ApiClient`
+   - both are also saved locally (e.g. `SharedPreferences`)
 4. User is redirected to `/dashboard`
+
+### Session Restore (IMPORTANT)
+- On app startup, `AuthController.loadSession()` runs automatically
+- It restores:
+  - user
+  - token
+- Prevents logout on refresh (especially for web)
+
+### Logout
+- Clears local storage
+- Clears token from `ApiClient`
+- Redirects user to `/login`
 
 ---
 
@@ -188,9 +201,18 @@ We use `MultiProvider` in `main.dart`:
 ```dart
 MultiProvider(
   providers: [
-    Provider<ApiClient>(create: (_) => ApiClient()),
-    ChangeNotifierProvider<AuthController>(
-      create: (_) => AuthController(),
+    Provider<ApiClient>(
+      create: (_) => ApiClient(),
+    ),
+
+    ProxyProvider<ApiClient, AuthApi>(
+      update: (_, client, __) => AuthApi(client),
+    ),
+
+    ChangeNotifierProxyProvider<AuthApi, AuthController>(
+      create: (context) => AuthController(context.read<AuthApi>()),
+      update: (_, authApi, authController) =>
+          authController ?? AuthController(authApi),
     ),
   ],
 )
@@ -199,6 +221,8 @@ MultiProvider(
 ### Why this matters
 - `ApiClient` is shared globally → keeps token consistent
 - `AuthController` notifies UI when login/logout changes
+- Ensures a **single shared ApiClient instance** (keeps token in sync)
+- Allows AuthController to call backend APIs cleanly
 
 ---
 
@@ -230,6 +254,14 @@ The `ApiClient` automatically prepends the base URL.
 
 ## 🔌 ApiClient Usage
 
+### 🔐 Token Handling
+- Token is set after login via `apiClient.setToken(token)`
+- Automatically included in headers:
+
+```
+Authorization: Bearer <token>
+```
+
 Located at:
 
 ```
@@ -256,12 +288,16 @@ await client.postJson("/admin/students", {...});
 
 ## 🔒 Route Protection (GoRouter)
 
-Routing is protected using `redirect` logic in `main.dart`.
+Routing is protected using `redirect` logic + `AuthController`.
 
 ### Behavior
 - Not logged in → redirected to `/login`
-- Logged in → redirected away from `/login`
+- Logged in → cannot go back to `/login`
 - Non-admin → blocked from `/dashboard/admin/*`
+
+### Extra Protection
+- `refreshListenable: auth` ensures UI reacts instantly to login/logout
+- Prevents flickering using `auth.isLoading`
 
 ---
 
@@ -281,7 +317,7 @@ requireAuth, requireAdmin
 ### Example
 
 ```dart
-final auth = context.watch<AuthController>();
+final auth = context.auth;
 
 if (!auth.isAdmin) {
   return Center(child: Text("Access denied"));
@@ -332,5 +368,24 @@ The app uses `go_router` for:
 
 Create a new folder under `lib/features/` for each feature. For a dashboard, use `lib/features/dashboard/` with its own `api/`, and `ui/` subdirectories. Keep authentication-specific screens in `features/auth/` and place dashboard pages in `features/dashboard/ui/`. This keeps APIs, models, and widgets scoped to their feature and makes future maintenance much easier.
 
+
+---
+
+## ⚠️ Common Pitfalls
+
+### 1. Getting logged out on refresh
+- Make sure `loadSession()` is called in `AuthController` constructor
+
+### 2. API not authenticated
+- Ensure `ApiClient` has token set after login
+- Always use `context.read<ApiClient>()` (never create new instance)
+
+### 3. Backend not reachable
+- Check `ApiConfig.baseUrl`
+- Ensure backend is running on correct port
+
+### 4. Port keeps changing (Flutter Web)
+- This is normal (`flutter run -d chrome` uses random ports)
+- Backend should always stay on fixed port (e.g. 4000)
 
 ---
