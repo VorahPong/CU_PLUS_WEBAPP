@@ -3,6 +3,7 @@ import '../../../core/network/api_client.dart';
 import '../api/student_api.dart';
 import 'package:provider/provider.dart';
 import '../../../features/auth/controller/auth_controller.dart';
+import 'package:go_router/go_router.dart';
 
 class RegisterStudentView extends StatefulWidget {
   const RegisterStudentView({super.key, required this.email});
@@ -69,7 +70,7 @@ class _RegisterStudentViewState extends State<RegisterStudentView> {
       );
 
       // go back
-      // context.go('/dashboard/admin/students');
+      context.go('/dashboard/admin/students');
     } catch (e) {
       setState(() {
         _error = e.toString().replaceFirst("Exception: ", "");
