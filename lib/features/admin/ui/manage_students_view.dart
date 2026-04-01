@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../../core/network/api_client.dart';
+import '../api/student_api.dart';
 
 class ManageStudentsView extends StatefulWidget {
   const ManageStudentsView({super.key, required this.email});
@@ -11,7 +14,66 @@ class ManageStudentsView extends StatefulWidget {
 }
 
 class _ManageStudentsViewState extends State<ManageStudentsView> {
-  // TODO: fetch students from backend and display in table
+  late final StudentApi _studentApi;
+
+  bool _loadingStudents = true;
+  String? _studentsError;
+  List<StudentRow> _students = [];
+
+  Future<void> _loadStudents() async {
+    setState(() {
+      _loadingStudents = true;
+      _studentsError = null;
+    });
+
+    try {
+      final students = await _studentApi.getStudents();
+
+      if (!mounted) return;
+
+      setState(() {
+        _students = students;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _studentsError = e.toString().replaceFirst("Exception: ", "");
+      });
+    } finally {
+      if (!mounted) return;
+
+      setState(() {
+        _loadingStudents = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final client = context.read<ApiClient>();
+      _studentApi = StudentApi(client);
+      _loadStudents();
+    });
+  }
+
+  String _formatYear(String year) {
+    switch (year) {
+      case '1':
+        return '1st Year';
+      case '2':
+        return '2nd Year';
+      case '3':
+        return '3rd Year';
+      case '4':
+        return '4th Year';
+      default:
+        return year;
+    }
+  }
 
   bool _showFilter = false;
 
@@ -73,18 +135,59 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
   // ----------------------
   OverlayEntry? _actionEntry;
   LayerLink? _activeActionLink; // which row was clicked
+  String? _activeStudentId;
+  bool? _activeStudentIsActive;
 
-  void _toggleActionOverlay(LayerLink link) {
+  void _toggleActionOverlay(LayerLink link, String studentId, bool isActive) {
     if (_actionEntry != null) {
+      final wasSameLink = identical(_activeActionLink, link);
       _hideActionOverlay();
-      // if user clicked a different row, open again at new position
-      if (_activeActionLink != link) {
+
+      if (!wasSameLink) {
         _activeActionLink = link;
+        _activeStudentId = studentId;
+        _activeStudentIsActive = isActive;
         _showActionOverlay();
       }
     } else {
       _activeActionLink = link;
+      _activeStudentId = studentId;
+      _activeStudentIsActive = isActive;
       _showActionOverlay();
+    }
+  }
+
+  Future<void> _setStudentActive(bool shouldBeActive) async {
+    final studentId = _activeStudentId;
+    if (studentId == null) return;
+
+    try {
+      if (shouldBeActive) {
+        await _studentApi.reactivateStudent(studentId);
+      } else {
+        await _studentApi.deactivateStudent(studentId);
+      }
+      _hideActionOverlay();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            shouldBeActive ? "Student reactivated" : "Student deactivated",
+          ),
+        ),
+      );
+
+      await _loadStudents();
+    } catch (e) {
+      _hideActionOverlay();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst("Exception: ", ""))),
+      );
     }
   }
 
@@ -147,13 +250,16 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                       ),
                       _divider(),
                       _actionItem(
-                        icon: Icons.delete_outline,
-                        label: "Delete",
-                        isDanger: true,
-                        onTap: () {
-                          _hideActionOverlay();
-                          // TODO: delete action
-                        },
+                        icon: _activeStudentIsActive == true
+                            ? Icons.person_off_outlined
+                            : Icons.person_add_alt_1_outlined,
+                        label: _activeStudentIsActive == true
+                            ? "Deactivate"
+                            : "Reactivate",
+                        isDanger: _activeStudentIsActive == true,
+                        onTap: () => _setStudentActive(
+                          !(_activeStudentIsActive ?? true),
+                        ),
                       ),
                     ],
                   ),
@@ -172,17 +278,44 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
     _actionEntry?.remove();
     _actionEntry = null;
     _activeActionLink = null;
+    _activeStudentId = null;
+    _activeStudentIsActive = null;
   }
 
-  Widget _actionsCell() {
-    final link = LayerLink(); // ✅ unique per cell
+  Widget _actionsCell(String studentId, bool isActive) {
+    final link = LayerLink();
 
     return CompositedTransformTarget(
       link: link,
       child: IconButton(
         icon: const Icon(Icons.more_horiz),
         tooltip: "Actions",
-        onPressed: () => _toggleActionOverlay(link),
+        onPressed: () => _toggleActionOverlay(link, studentId, isActive),
+      ),
+    );
+  }
+
+  Widget _statusChip(bool isActive) {
+    final background = isActive
+        ? const Color(0xFFE8F5E9)
+        : const Color(0xFFFFEBEE);
+    final foreground = isActive
+        ? const Color(0xFF2E7D32)
+        : const Color(0xFFC62828);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        isActive ? "Active" : "Deactivated",
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: foreground,
+        ),
       ),
     );
   }
@@ -483,139 +616,145 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
 
                           // Table
                           Expanded(
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    child: ConstrainedBox(
-                                      constraints: const BoxConstraints(
-                                        minWidth: 900,
-                                      ),
-                                      child: DataTable(
-                                        columnSpacing: 40,
-                                        dividerThickness: 1,
-                                        columns: const [
-                                          DataColumn(
-                                            label: Text(
-                                              "School ID",
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
+                            child: _loadingStudents
+                                ? const Center(
+                                    child: CircularProgressIndicator(),
+                                  )
+                                : _studentsError != null
+                                ? Center(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          _studentsError!,
+                                          style: const TextStyle(
+                                            color: Colors.red,
                                           ),
-                                          DataColumn(
-                                            label: Text(
-                                              "Name",
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                          DataColumn(
-                                            label: Text(
-                                              "Email",
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                          DataColumn(
-                                            label: Text(
-                                              "Year",
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                          DataColumn(
-                                            label: Text(
-                                              "Actions",
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                        rows: [
-                                          DataRow(
-                                            cells: [
-                                              DataCell(Text("2026001")),
-                                              DataCell(Text("Jane Smith")),
-                                              DataCell(Text("jane@school.edu")),
-                                              DataCell(Text("1st Year")),
-                                              DataCell(_actionsCell()),
-                                            ],
-                                          ),
-                                          DataRow(
-                                            cells: [
-                                              DataCell(Text("2026002")),
-                                              DataCell(Text("Alex Brown")),
-                                              DataCell(Text("alex@school.edu")),
-                                              DataCell(Text("2nd Year")),
-                                              DataCell(_actionsCell()),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 12),
+                                        OutlinedButton(
+                                          onPressed: _loadStudents,
+                                          child: const Text("Retry"),
+                                        ),
+                                      ],
                                     ),
+                                  )
+                                : _students.isEmpty
+                                ? const Center(child: Text("No students found"))
+                                : Column(
+                                    children: [
+                                      Expanded(
+                                        child: SingleChildScrollView(
+                                          scrollDirection: Axis.horizontal,
+                                          child: ConstrainedBox(
+                                            constraints: const BoxConstraints(
+                                              minWidth: 900,
+                                            ),
+                                            child: DataTable(
+                                              columnSpacing: 40,
+                                              dividerThickness: 1,
+                                              columns: const [
+                                                DataColumn(
+                                                  label: Text(
+                                                    "School ID",
+                                                    style: TextStyle(
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                                DataColumn(
+                                                  label: Text(
+                                                    "Name",
+                                                    style: TextStyle(
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                                DataColumn(
+                                                  label: Text(
+                                                    "Email",
+                                                    style: TextStyle(
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                                DataColumn(
+                                                  label: Text(
+                                                    "Year",
+                                                    style: TextStyle(
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                                DataColumn(
+                                                  label: Text(
+                                                    "Status",
+                                                    style: TextStyle(
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                                DataColumn(
+                                                  label: Text(
+                                                    "Actions",
+                                                    style: TextStyle(
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                              rows: _students.map((student) {
+                                                return DataRow(
+                                                  cells: [
+                                                    DataCell(
+                                                      Text(student.schoolId),
+                                                    ),
+                                                    DataCell(
+                                                      Text(student.name),
+                                                    ),
+                                                    DataCell(
+                                                      Text(student.email),
+                                                    ),
+                                                    DataCell(
+                                                      Text(
+                                                        _formatYear(
+                                                          student.year,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    DataCell(
+                                                      _statusChip(
+                                                        student.isActive,
+                                                      ),
+                                                    ),
+                                                    DataCell(
+                                                      _actionsCell(
+                                                        student.id,
+                                                        student.isActive,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                );
+                                              }).toList(),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-
-                                const SizedBox(height: 12),
-
-                                // Pagination (placeholder)
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    IconButton(
-                                      onPressed: () {
-                                        // TODO: previous page
-                                      },
-                                      icon: const Icon(Icons.chevron_left),
-                                    ),
-
-                                    _PageChip(
-                                      label: "1",
-                                      isActive: true,
-                                      onTap: () {
-                                        // TODO: go page 1
-                                      },
-                                    ),
-                                    const SizedBox(width: 8),
-
-                                    _PageChip(
-                                      label: "2",
-                                      isActive: false,
-                                      onTap: () {
-                                        // TODO: go page 2
-                                      },
-                                    ),
-                                    const SizedBox(width: 8),
-
-                                    _PageChip(
-                                      label: "3",
-                                      isActive: false,
-                                      onTap: () {
-                                        // TODO: go page 3
-                                      },
-                                    ),
-
-                                    IconButton(
-                                      onPressed: () {
-                                        // TODO: next page
-                                      },
-                                      icon: const Icon(Icons.chevron_right),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
                           ),
                         ],
                       ),

@@ -9,6 +9,10 @@ class ApiClient {
 
   final http.Client _client;
 
+  Map<String, String> get _headers => {
+    'Content-Type': 'application/json',
+  };
+
   static http.Client _buildClient() {
     if (kIsWeb) {
       final client = BrowserClient()..withCredentials = true;
@@ -23,9 +27,7 @@ class ApiClient {
   ) async {
     final res = await _client.post(
       Uri.parse('${ApiConfig.baseUrl}$path'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: _headers,
       body: jsonEncode(body),
     );
 
@@ -50,9 +52,20 @@ class ApiClient {
   Future<Map<String, dynamic>> getJson(String path) async {
     final res = await _client.get(
       Uri.parse('${ApiConfig.baseUrl}$path'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: _headers,
+    );
+
+    return _handleResponse(res);
+  }
+
+  Future<Map<String, dynamic>> patchJson(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    final res = await _client.patch(
+      Uri.parse('${ApiConfig.baseUrl}$path'),
+      headers: _headers,
+      body: jsonEncode(body),
     );
 
     return _handleResponse(res);
@@ -61,9 +74,7 @@ class ApiClient {
   Future<Map<String, dynamic>> deleteJson(String path) async {
     final res = await _client.delete(
       Uri.parse('${ApiConfig.baseUrl}$path'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: _headers,
     );
 
     return _handleResponse(res);
