@@ -87,9 +87,17 @@ CU_PROJECT/
 
 ## Running the App
 
-  ```bash
-  flutter run
-  ```
+```bash
+flutter run -d chrome --web-port 3000
+```
+
+⚠️ **Important (Web Port Requirement)**  
+The frontend **must run on port 3000** when using Flutter Web.
+
+The backend is configured to allow requests only from:
+http://localhost:3000
+
+If you run Flutter without specifying the port, it will use a random port and your API calls will fail due to CORS restrictions.
 
 ## Naming Rules
 
