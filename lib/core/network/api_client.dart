@@ -32,6 +32,21 @@ class ApiClient {
     return _handleResponse(res);
   }
 
+  Future<Map<String, dynamic>> putJson(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    final res = await _client.put(
+      Uri.parse('${ApiConfig.baseUrl}$path'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
+
+    return _handleResponse(res);
+  }
+
   Future<Map<String, dynamic>> getJson(String path) async {
     final res = await _client.get(
       Uri.parse('${ApiConfig.baseUrl}$path'),

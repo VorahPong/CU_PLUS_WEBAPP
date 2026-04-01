@@ -3,7 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 enum SidebarItem {
   courseContent,
-  message,
+  announcements,
   calendar,
   manageStudents,
   support,
@@ -105,8 +105,8 @@ class Sidebar extends StatelessWidget {
           ),
           _item(
             context: context,
-            item: SidebarItem.message,
-            title: "Message",
+            item: SidebarItem.announcements,
+            title: "Announcements",
             iconPath: 'assets/images/side-bar/message-icon.svg',
             iconSize: 22,
           ),

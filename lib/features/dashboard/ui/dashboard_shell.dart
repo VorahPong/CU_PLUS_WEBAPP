@@ -33,8 +33,8 @@ class _DashboardShellState extends State<DashboardShell> {
       case SidebarItem.courseContent:
         context.go('/dashboard'); // or /dashboard/course-content
         break;
-      case SidebarItem.message:
-        context.go('/dashboard/message');
+      case SidebarItem.announcements:
+        context.go('/dashboard/announcements');
         break;
       case SidebarItem.calendar:
         context.go('/dashboard/admin/calendar');
@@ -76,8 +76,8 @@ class _DashboardShellState extends State<DashboardShell> {
         final SidebarItem routeItem;
         if (loc.startsWith('/dashboard/admin/students')) {
           routeItem = SidebarItem.manageStudents;
-        } else if (loc.startsWith('/dashboard/message')) {
-          routeItem = SidebarItem.message;
+        } else if (loc.startsWith('/dashboard/announcements')) {
+          routeItem = SidebarItem.announcements;
         } else if (loc.startsWith('/dashboard/admin/calendar')) {
           routeItem = SidebarItem.calendar;
         } else if (loc.startsWith('/dashboard/support')) {
