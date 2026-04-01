@@ -107,9 +107,9 @@ class _DashboardShellState extends State<DashboardShell> {
                         selectedItem: _selectedItem,
                         isAdmin: isAdmin,
                         onSelect: (item) => _selectItem(item, isDesktop: true),
-                        onLogout: () {
-                          final auth = context.authRead;
-                          auth.logout();
+                        onLogout: () async {
+                          await context.authRead.logout();
+                          if (!mounted) return;
                           context.go('/login');
                         },
                       ),
@@ -153,10 +153,9 @@ class _DashboardShellState extends State<DashboardShell> {
                               isAdmin: isAdmin,
                               onSelect: (item) =>
                                   _selectItem(item, isDesktop: false),
-                              onLogout: () {
-                                setState(() => _showSidebar = false);
-                                final auth = context.authRead;
-                                auth.logout();
+                              onLogout: () async {
+                                await context.authRead.logout();
+                                if (!mounted) return;
                                 context.go('/login');
                               },
                             ),
