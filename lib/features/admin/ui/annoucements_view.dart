@@ -116,11 +116,28 @@ class _AnnoucementsViewState extends State<AnnoucementsView> {
     }
   }
 
-  void _editPost(int index) {
+  Future<void> _editPost(int index) async {
+  final announcement = Map<String, dynamic>.from(_announcements[index]);
+
+  final updated = await Navigator.push<bool>(
+    context,
+    MaterialPageRoute(
+      builder: (context) => CreateAnnouncementPage(
+        announcement: announcement,
+      ),
+    ),
+  );
+
+  if (updated == true) {
+    await _loadAnnouncements();
+
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Edit post ${index + 1} clicked")),
+      const SnackBar(content: Text("Announcement updated")),
     );
   }
+}
 
   Future<void> _deletePost(int index) async {
     final announcement = _announcements[index];

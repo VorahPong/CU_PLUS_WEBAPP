@@ -6,7 +6,12 @@ import '../../../features/auth/controller/auth_controller.dart';
 import '../api/announcement_api.dart';
 
 class CreateAnnouncementPage extends StatefulWidget {
-  const CreateAnnouncementPage({super.key});
+  const CreateAnnouncementPage({
+    super.key,
+    this.announcement,
+  });
+
+  final Map<String, dynamic>? announcement;
 
   @override
   State<CreateAnnouncementPage> createState() => _CreateAnnouncementPageState();
@@ -24,6 +29,23 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
 
   bool _loading = false;
   String? _error;
+
+  bool get _isEditing => widget.announcement != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final announcement = widget.announcement;
+    if (announcement != null) {
+      _messageController.text = announcement['message'] ?? '';
+      everyone = announcement['everyone'] == true;
+      firstYear = announcement['firstYear'] == true;
+      secondYear = announcement['secondYear'] == true;
+      thirdYear = announcement['thirdYear'] == true;
+      fourthYear = announcement['fourthYear'] == true;
+    }
+  }
 
   @override
   void dispose() {
@@ -79,19 +101,37 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
     });
 
     try {
-      await announcementApi.createAnnouncement(
-        message: _messageController.text.trim(),
-        everyone: everyone,
-        firstYear: firstYear,
-        secondYear: secondYear,
-        thirdYear: thirdYear,
-        fourthYear: fourthYear,
-      );
+      if (_isEditing) {
+        await announcementApi.updateAnnouncement(
+          id: widget.announcement!['id'],
+          message: _messageController.text.trim(),
+          everyone: everyone,
+          firstYear: firstYear,
+          secondYear: secondYear,
+          thirdYear: thirdYear,
+          fourthYear: fourthYear,
+        );
+      } else {
+        await announcementApi.createAnnouncement(
+          message: _messageController.text.trim(),
+          everyone: everyone,
+          firstYear: firstYear,
+          secondYear: secondYear,
+          thirdYear: thirdYear,
+          fourthYear: fourthYear,
+        );
+      }
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Announcement created successfully")),
+        SnackBar(
+          content: Text(
+            _isEditing
+                ? "Announcement updated successfully"
+                : "Announcement created successfully",
+          ),
+        ),
       );
 
       Navigator.pop(context, true);
@@ -126,11 +166,11 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 16.0),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0),
                 child: Text(
-                  "Announcement/Post",
-                  style: TextStyle(fontSize: 24),
+                  _isEditing ? "Edit Announcement/Post" : "Announcement/Post",
+                  style: const TextStyle(fontSize: 24),
                 ),
               ),
               const SizedBox(height: 12),
@@ -254,7 +294,9 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
                                         color: Colors.white,
                                       ),
                                     )
-                                  : const Text("Confirm"),
+                                  : Text(
+                                      _isEditing ? "Save Changes" : "Confirm",
+                                    ),
                             ),
                           ],
                         ),
