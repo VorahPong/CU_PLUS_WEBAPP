@@ -1,7 +1,10 @@
 import 'package:cu_plus_webapp/features/admin/ui/calender_view.dart';
 import 'package:cu_plus_webapp/features/admin/ui/manage_students_view.dart';
-import 'package:cu_plus_webapp/features/admin/ui/annoucements_view.dart';
+import 'package:cu_plus_webapp/features/admin/ui/announcements_view.dart';
 import 'package:cu_plus_webapp/features/admin/ui/register_student_view.dart';
+
+import 'package:cu_plus_webapp/features/students/ui/announcements_view.dart';
+
 import 'package:cu_plus_webapp/features/auth/ui/login_page.dart';
 import 'package:cu_plus_webapp/features/dashboard/ui/dashboard_shell.dart';
 import 'package:cu_plus_webapp/features/admin/ui/course_content_view.dart';
@@ -141,12 +144,22 @@ class MyApp extends StatefulWidget {
             },
           ),
           GoRoute(
-            path: '/dashboard/announcements',
+            path: '/dashboard/admin/announcements',
             pageBuilder: (context, state) {
               final email = auth.user?.email ?? '';
               return NoTransitionPage(
                 key: state.pageKey,
-                child: AnnoucementsView(email: email),
+                child: AdminAnnoucementsView(email: email),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/student/announcements',
+            pageBuilder: (context, state) {
+              final email = auth.user?.email ?? '';
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: StudentAnnouncementsView(email: email),
               );
             },
           ),

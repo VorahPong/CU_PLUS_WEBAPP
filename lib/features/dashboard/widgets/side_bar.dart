@@ -4,8 +4,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 enum SidebarItem {
   courseContent,
   announcements,
+  adminAnnouncements,
   calendar,
-  manageStudents,
+  adminManageStudents,
   support,
   setting,
 }
@@ -105,22 +106,31 @@ class Sidebar extends StatelessWidget {
           ),
           _item(
             context: context,
-            item: SidebarItem.announcements,
-            title: "Announcements",
-            iconPath: 'assets/images/side-bar/message-icon.svg',
-            iconSize: 22,
-          ),
-          _item(
-            context: context,
             item: SidebarItem.calendar,
             title: "Calendar",
             iconPath: 'assets/images/side-bar/calender-icon.svg',
             iconSize: 28,
           ),
+          if (!isAdmin) ...[
+            _item(
+              context: context,
+              item: SidebarItem.announcements,
+              title: "Announcements",
+              iconPath: 'assets/images/side-bar/message-icon.svg',
+              iconSize: 22,
+            ),
+          ],
           if (isAdmin) ...[
             _item(
               context: context,
-              item: SidebarItem.manageStudents,
+              item: SidebarItem.adminAnnouncements,
+              title: "Announcements",
+              iconPath: 'assets/images/side-bar/message-icon.svg',
+              iconSize: 22,
+            ),
+            _item(
+              context: context,
+              item: SidebarItem.adminManageStudents,
               title: "Manage Students",
               iconPath: 'assets/images/side-bar/student-icon.svg',
               iconSize: 28,
