@@ -13,17 +13,14 @@ class AnnouncementApi {
     required bool thirdYear,
     required bool fourthYear,
   }) async {
-    final response = await _client.postJson(
-      '/admin/announcements',
-      {
-        "message": message,
-        "everyone": everyone,
-        "firstYear": firstYear,
-        "secondYear": secondYear,
-        "thirdYear": thirdYear,
-        "fourthYear": fourthYear,
-      },
-    );
+    final response = await _client.postJson('/admin/announcements', {
+      "message": message,
+      "everyone": everyone,
+      "firstYear": firstYear,
+      "secondYear": secondYear,
+      "thirdYear": thirdYear,
+      "fourthYear": fourthYear,
+    });
 
     if (response.isEmpty) {
       throw Exception("Failed to create announcement");
@@ -48,6 +45,11 @@ class AnnouncementApi {
     }
   }
 
+  Future<List<dynamic>> getStudentAnnouncements() async {
+    final response = await _client.getJson('/student/announcements/my-feed');
+    return response['announcements'] as List<dynamic>? ?? [];
+  }
+
   Future<void> updateAnnouncement({
     required String id,
     required String message,
@@ -57,17 +59,14 @@ class AnnouncementApi {
     required bool thirdYear,
     required bool fourthYear,
   }) async {
-    final response = await _client.putJson(
-      '/admin/announcements/$id',
-      {
-        "message": message,
-        "everyone": everyone,
-        "firstYear": firstYear,
-        "secondYear": secondYear,
-        "thirdYear": thirdYear,
-        "fourthYear": fourthYear,
-      },
-    );
+    final response = await _client.putJson('/admin/announcements/$id', {
+      "message": message,
+      "everyone": everyone,
+      "firstYear": firstYear,
+      "secondYear": secondYear,
+      "thirdYear": thirdYear,
+      "fourthYear": fourthYear,
+    });
 
     if (response.isEmpty) {
       throw Exception("Failed to update announcement");
