@@ -1,13 +1,13 @@
-import 'package:cu_plus_webapp/features/admin/ui/calender_view.dart';
-import 'package:cu_plus_webapp/features/admin/ui/manage_students_view.dart';
-import 'package:cu_plus_webapp/features/admin/ui/announcements_view.dart';
-import 'package:cu_plus_webapp/features/admin/ui/register_student_view.dart';
+import 'package:cu_plus_webapp/features/calender/ui/calender_view.dart';
+import 'package:cu_plus_webapp/features/manageStudents/ui/admin/manage_students_view.dart';
+import 'package:cu_plus_webapp/features/announcements/ui/admin/announcements_view.dart';
+import 'package:cu_plus_webapp/features/manageStudents/ui/admin/register_student_view.dart';
 
-import 'package:cu_plus_webapp/features/students/ui/announcements_view.dart';
+import 'package:cu_plus_webapp/features/announcements/ui/student/announcements_view.dart';
 
 import 'package:cu_plus_webapp/features/auth/ui/login_page.dart';
 import 'package:cu_plus_webapp/features/dashboard/ui/dashboard_shell.dart';
-import 'package:cu_plus_webapp/features/admin/ui/course_content_view.dart';
+import 'package:cu_plus_webapp/features/courseContent/ui/course_content_view.dart';
 import 'package:flutter/material.dart';
 import 'features/auth/ui/first_page.dart';
 
