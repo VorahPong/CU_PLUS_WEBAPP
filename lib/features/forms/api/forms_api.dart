@@ -38,6 +38,20 @@ class FormsApi {
     return res['form'];
   }
 
+  Future<List<dynamic>> getAdminFormSubmissions(String formId) async {
+    final res = await _client.getJson('/admin/forms/$formId/submissions');
+    return res['submissions'] ?? [];
+  }
+
+  Future<Map<String, dynamic>> getAdminSubmissionDetail(
+    String submissionId,
+  ) async {
+    final res = await _client.getJson(
+      '/admin/forms/submissions/$submissionId/detail',
+    );
+    return Map<String, dynamic>.from(res['submission']);
+  }
+
   Future<Map<String, dynamic>> updateForm({
     required String id,
     required String title,

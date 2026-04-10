@@ -198,8 +198,9 @@ class _CourseContentViewState extends State<CourseContentView> {
                               if (formId == null) return;
 
                               if (isAdmin) {
+                                // context.go('/dashboard/admin/forms/$formId/edit',
                                 context.go(
-                                  '/dashboard/admin/forms/$formId/edit',
+                                  '/dashboard/admin/forms/$formId/preview',
                                 );
                               } else {
                                 if (!isAvailableToStudent) return;
@@ -315,6 +316,16 @@ class _CourseContentViewState extends State<CourseContentView> {
                                       ),
                                       _InfoChip(
                                         label: 'Submissions: $submissionCount',
+                                        onPressed: isAdmin
+                                            ? () {
+                                                final formId = form['id']
+                                                    ?.toString();
+                                                if (formId == null) return;
+                                                context.go(
+                                                  '/dashboard/admin/forms/$formId/submissions',
+                                                );
+                                              }
+                                            : null,
                                       ),
                                       if (!isAdmin && !isAvailableToStudent)
                                         const _InfoChip(
@@ -338,13 +349,14 @@ class _CourseContentViewState extends State<CourseContentView> {
 }
 
 class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.label});
+  const _InfoChip({required this.label, this.onPressed});
 
   final String label;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final child = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -355,6 +367,16 @@ class _InfoChip extends StatelessWidget {
         label,
         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
       ),
+    );
+
+    if (onPressed == null) {
+      return child;
+    }
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onPressed,
+      child: child,
     );
   }
 }

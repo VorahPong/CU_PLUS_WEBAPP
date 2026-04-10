@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cu_plus_webapp/core/network/api_client.dart';
 import 'package:cu_plus_webapp/features/forms/api/forms_api.dart';
+import 'package:cu_plus_webapp/features/forms/widgets/form_renderer.dart';
 
 import 'dart:convert';
 import 'dart:typed_data';
@@ -919,13 +920,42 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
                 ),
               ],
               const SizedBox(height: 24),
-              ..._fields.map((rawField) {
-                final field = Map<String, dynamic>.from(rawField);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: _buildField(field),
-                );
-              }),
+              FormRenderer(
+                fields: _fields,
+                readOnly: _isReadOnly,
+                textControllers: _textControllers,
+                checkboxValues: _checkboxValues,
+                dateValues: _dateValues,
+                yearControllers: _yearControllers,
+                signaturePadKeys: _signaturePadKeys,
+                signatureValues: _signatureValues,
+                onCheckboxChanged: (fieldId, option, checked) {
+                  setState(() {
+                    final set = _checkboxValues[fieldId] ?? <String>{};
+                    if (checked) {
+                      set.add(option);
+                    } else {
+                      set.remove(option);
+                    }
+                    _checkboxValues[fieldId] = set;
+                  });
+                },
+                onDateTap: (fieldId) {
+                  _pickDate(fieldId);
+                },
+                onSignatureDrawEnd: (fieldId) {
+                  return () {
+                    setState(() {
+                      _signatureValues[fieldId] = 'drawn';
+                    });
+                  };
+                },
+                onSignatureClear: (fieldId) {
+                  return () {
+                    _clearSignature(fieldId);
+                  };
+                },
+              ),
               const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,

@@ -7,9 +7,14 @@ import 'package:cu_plus_webapp/features/forms/ui/admin/create_form_view.dart';
 import 'package:cu_plus_webapp/features/announcements/ui/student/announcements_view.dart';
 
 import 'package:cu_plus_webapp/features/auth/ui/login_page.dart';
+
 import 'package:cu_plus_webapp/features/dashboard/ui/dashboard_shell.dart';
 import 'package:cu_plus_webapp/features/courseContent/ui/course_content_view.dart';
+
 import 'package:cu_plus_webapp/features/forms/ui/student/student_form_fill_view.dart';
+import 'package:cu_plus_webapp/features/forms/ui/admin/admin_form_preview_view.dart';
+import 'package:cu_plus_webapp/features/forms/ui/admin/admin_form_submissions_view.dart';
+import 'package:cu_plus_webapp/features/forms/ui/admin/admin_form_submission_detail_view.dart';
 
 import 'package:flutter/material.dart';
 import 'features/auth/ui/first_page.dart';
@@ -192,6 +197,38 @@ class MyApp extends StatefulWidget {
               return NoTransitionPage(
                 key: state.pageKey,
                 child: CreateFormView(formId: formId),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/admin/forms/:id/preview',
+            pageBuilder: (context, state) {
+              final formId = state.pathParameters['id']!;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: AdminFormPreviewView(formId: formId),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/admin/forms/:id/submissions',
+            pageBuilder: (context, state) {
+              final formId = state.pathParameters['id']!;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: AdminFormSubmissionsView(formId: formId),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/admin/forms/submissions/:submissionId/detail',
+            pageBuilder: (context, state) {
+              final submissionId = state.pathParameters['submissionId']!;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: AdminFormSubmissionDetailView(
+                  submissionId: submissionId,
+                ),
               );
             },
           ),
