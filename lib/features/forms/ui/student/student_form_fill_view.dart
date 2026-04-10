@@ -236,7 +236,7 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
     if (state == null) return null;
 
     try {
-      final ui.Image image = await state.toImage(pixelRatio: 3.0);
+      final ui.Image image = await state.toImage(pixelRatio: 1.0);
       final ByteData? byteData = await image.toByteData(
         format: ui.ImageByteFormat.png,
       );
