@@ -149,6 +149,18 @@ CU_PLUS_WEBAPP/
 │   │           ├── calendar_view.dart
 │   │           └── announcements_view.dart   # student announcements feed
 │   │
+│   │   ├── forms/             # Forms feature
+│   │   │   ├── api/
+│   │   │   │   └── forms_api.dart
+│   │   │   └── ui/
+│   │   │       ├── student/
+│   │   │       │   ├── student_forms_view.dart
+│   │   │       │   └── student_form_fill_view.dart
+│   │   │       └── admin/
+│   │   │           ├── admin_forms_view.dart
+│   │   │           ├── create_form_view.dart
+│   │   │           └── edit_form_view.dart
+│
 │   └── main.dart              # App entry point + router setup
 │
 ├── assets/                    # Images, icons, fonts
@@ -374,25 +386,57 @@ if (isAdmin) {
 }
 ```
 
+## 📝 Forms Feature
+
+The application includes a dynamic form system for student submissions.
+
+### Admin
+- Create forms with custom fields:
+  - Text
+  - Text Area
+  - Checkbox (multiple options)
+  - Date
+  - Year
+  - Signature
+- Edit and manage forms
+
+### Student
+- View available forms
+- Fill and submit forms
+- Cannot resubmit after submission
+- Can review submitted forms in read-only mode
+
+### Signature Support
+- Students can draw signatures
+- Signatures are uploaded to Cloudinary
+- Stored as image URLs and displayed on review
+
+## 🖊 Signature Upload Flow
+
+1. Student draws signature using signature pad
+2. App converts drawing to image (base64)
+3. Sends to backend `/student/forms/signature`
+4. Backend uploads to Cloudinary
+5. URL is returned and stored in form submission
+6. Signature is displayed via `Image.network()`
+
+## 🔌 Forms API Usage
+
+Located in:
+`lib/features/forms/api/forms_api.dart`
+
+### Methods
+- `getStudentForms()`
+- `getStudentFormById(id)`
+- `submitForm(id, answers)`
+- `uploadSignature(dataUrl)`
+
+Always accessed via:
+```dart
+final api = FormsApi(context.read<ApiClient>());
+```
+
 ---
-
-## 📌 Important Development Rules
-
-- Always use shared `ApiClient` from Provider
-- Never create `ApiClient()` manually inside widgets
-- Keep API paths clean (`/auth/login`, NOT full URLs)
-- Protect admin routes both frontend and backend
-
----
-
-### Add More API Calls
-- Create a new api method inside the relevant `features/<feature>/api/*.dart` file.
-- Use `ApiClient` from `lib/core/network/api_client.dart` to keep authentication headers and base URLs consistent.
-- Keep feature-specific logic inside its folder; don’t mix unrelated APIs into `auth_api.dart`.
-
-### Add New UI Pages
-- Create a widget file inside `features/<feature>/ui/`, following the existing naming convention (e.g., `settings_page.dart`).
-- Share common widgets via a dedicated `widgets/` subfolder if a feature grows.
 
 ## 🌐 Routing (GoRouter)
 
@@ -409,6 +453,14 @@ The app uses `go_router` for:
 - /dashboard/admin/students
 - /dashboard/admin/students/register
 
+### Form Routes
+
+- /dashboard/student/forms
+- /dashboard/student/forms/:id
+- /dashboard/admin/forms
+- /dashboard/admin/forms/create
+- /dashboard/admin/forms/:id/edit
+
 ### Quick Tips
 - Register new features by importing them in `main.dart` or the relevant coordinator widget.
 - Update `assets/` and `pubspec.yaml` when you add images or fonts.
@@ -418,6 +470,15 @@ The app uses `go_router` for:
 
 Create a new folder under `lib/features/` for each feature. For a dashboard, use `lib/features/dashboard/` with its own `api/`, and `ui/` subdirectories. Keep authentication-specific screens in `features/auth/` and place dashboard pages in `features/dashboard/ui/`. This keeps APIs, models, and widgets scoped to their feature and makes future maintenance much easier.
 
+
+---
+
+## 📌 Form Behavior Rules
+
+- Forms become read-only after submission
+- Students cannot edit submitted forms
+- Fields are dynamically rendered based on backend config
+- Signature fields display uploaded images in review mode
 
 ---
 
@@ -445,4 +506,4 @@ Create a new folder under `lib/features/` for each feature. For a dashboard, use
   ```dart
   final isAdmin = context.authRead.isAdmin;
   ```
----</file>
+---
