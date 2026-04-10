@@ -61,7 +61,7 @@ class FormsApi {
 
   Future<Map<String, dynamic>> getStudentFormById(String id) async {
     final res = await _client.getJson('/student/forms/$id');
-    return Map<String, dynamic>.from(res['form']);
+    return Map<String, dynamic>.from(res);
   }
 
   Future<Map<String, dynamic>> submitStudentForm({

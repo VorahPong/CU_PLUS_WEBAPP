@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:cu_plus_webapp/core/network/api_client.dart';
 import 'package:cu_plus_webapp/features/forms/api/forms_api.dart';
+
+import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
 
 class StudentFormFillView extends StatefulWidget {
   const StudentFormFillView({super.key, required this.formId});
@@ -19,12 +25,20 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
 
   Map<String, dynamic>? _form;
   List<dynamic> _fields = [];
+  Map<String, dynamic>? _submission;
 
   final Map<String, TextEditingController> _textControllers = {};
   final Map<String, Set<String>> _checkboxValues = {};
   final Map<String, DateTime?> _dateValues = {};
   final Map<String, TextEditingController> _yearControllers = {};
+  final Map<String, GlobalKey<SfSignaturePadState>> _signaturePadKeys = {};
   final Map<String, String?> _signatureValues = {};
+
+  bool get _hasSubmittedSubmission =>
+      _submission != null &&
+      ((_submission!['status'] ?? '').toString() != 'draft');
+
+  bool get _isReadOnly => _hasSubmittedSubmission;
 
   @override
   void initState() {
@@ -40,6 +54,9 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
     for (final controller in _yearControllers.values) {
       controller.dispose();
     }
+    for (final key in _signaturePadKeys.values) {
+      key.currentState?.clear();
+    }
     super.dispose();
   }
 
@@ -51,18 +68,37 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
 
     try {
       final api = FormsApi(context.read<ApiClient>());
-      final form = await api.getStudentFormById(widget.formId);
+      final response = await api.getStudentFormById(widget.formId);
+
+      final rawForm = response['form'] ?? response;
+      if (rawForm is! Map) {
+        throw Exception('Invalid form response');
+      }
+
+      final form = Map<String, dynamic>.from(rawForm);
+      final submissionRaw = response['submission'];
+      final submission = submissionRaw is Map
+          ? Map<String, dynamic>.from(submissionRaw)
+          : null;
       final fields = (form['fields'] as List?) ?? [];
 
       _form = form;
+      _submission = submission;
       _fields = fields;
 
+      _textControllers.clear();
+      _checkboxValues.clear();
+      _dateValues.clear();
+      _yearControllers.clear();
+      _signaturePadKeys.clear();
+      _signatureValues.clear();
+
       for (final rawField in _fields) {
-        final field = Map<String, dynamic>.from(rawField);
+        final field = Map<String, dynamic>.from(rawField as Map);
         final fieldId = field['id'].toString();
         final type = field['type'].toString();
 
-        if (type == 'text' || type == 'textarea' || type == 'signature') {
+        if (type == 'text' || type == 'textarea') {
           _textControllers[fieldId] = TextEditingController();
         }
 
@@ -79,10 +115,57 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
         }
 
         if (type == 'signature') {
+          _signaturePadKeys[fieldId] = GlobalKey<SfSignaturePadState>();
           _signatureValues[fieldId] = null;
         }
       }
 
+      final answers = ((_submission?['answers'] as List?) ?? [])
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+      final answerMap = <String, Map<String, dynamic>>{
+        for (final answer in answers) answer['formFieldId'].toString(): answer,
+      };
+
+      for (final rawField in _fields) {
+        final field = Map<String, dynamic>.from(rawField as Map);
+        final fieldId = field['id'].toString();
+        final type = field['type'].toString();
+        final answer = answerMap[fieldId];
+        if (answer == null) continue;
+
+        switch (type) {
+          case 'text':
+          case 'textarea':
+            _textControllers[fieldId]?.text =
+                (answer['valueText'] ?? '').toString();
+            break;
+          case 'checkbox':
+            final rawValue = (answer['valueText'] ?? '').toString();
+            final selected = rawValue
+                .split(',')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty)
+                .toSet();
+            _checkboxValues[fieldId] = selected;
+            break;
+          case 'date':
+            final rawDate = answer['valueDate'];
+            if (rawDate != null) {
+              _dateValues[fieldId] = DateTime.tryParse(rawDate.toString());
+            }
+            break;
+          case 'year':
+            _yearControllers[fieldId]?.text =
+                (answer['valueText'] ?? '').toString();
+            break;
+          case 'signature':
+            _signatureValues[fieldId] =
+                (answer['valueSignatureUrl'] ?? '').toString();
+            break;
+        }
+      }
       if (!mounted) return;
       setState(() {
         _loading = false;
@@ -97,6 +180,8 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
   }
 
   Future<void> _pickDate(String fieldId) async {
+    if (_isReadOnly) return;
+
     final picked = await showDatePicker(
       context: context,
       initialDate: _dateValues[fieldId] ?? DateTime.now(),
@@ -144,6 +229,51 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
     return '${date.month}/${date.day}/${date.year}';
   }
 
+  Future<String?> _captureSignatureAsDataUrl(String fieldId) async {
+    final key = _signaturePadKeys[fieldId];
+    final state = key?.currentState;
+    if (state == null) return null;
+
+    try {
+      final ui.Image image = await state.toImage(pixelRatio: 3.0);
+      final ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+      if (byteData == null) return null;
+
+      final Uint8List bytes = byteData.buffer.asUint8List();
+      final base64String = base64Encode(bytes);
+      return 'data:image/png;base64,$base64String';
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _captureAllSignatures() async {
+    for (final rawField in _fields) {
+      final field = Map<String, dynamic>.from(rawField);
+      final fieldId = field['id'].toString();
+      final type = field['type'].toString();
+
+      if (type == 'signature') {
+        final dataUrl = await _captureSignatureAsDataUrl(fieldId);
+        if (dataUrl != null) {
+          final uploadedUrl = await _uploadSignature(dataUrl);
+          if (uploadedUrl != null) {
+            _signatureValues[fieldId] = uploadedUrl;
+          }
+        }
+      }
+    }
+  }
+
+  void _clearSignature(String fieldId) {
+    _signaturePadKeys[fieldId]?.currentState?.clear();
+    setState(() {
+      _signatureValues[fieldId] = null;
+    });
+  }
+
   bool _validateRequiredFields() {
     for (final rawField in _fields) {
       final field = Map<String, dynamic>.from(rawField);
@@ -170,7 +300,7 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
           if (value.isEmpty) return false;
           break;
         case 'signature':
-          final value = _textControllers[fieldId]?.text.trim() ?? '';
+          final value = _signatureValues[fieldId]?.trim() ?? '';
           if (value.isEmpty) return false;
           break;
       }
@@ -220,7 +350,7 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
         case 'signature':
           answers.add({
             'formFieldId': fieldId,
-            'valueSignatureUrl': _textControllers[fieldId]?.text.trim(),
+            'valueSignatureUrl': _signatureValues[fieldId],
           });
           break;
       }
@@ -230,6 +360,9 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
   }
 
   Future<void> _submitForm() async {
+    if (_isReadOnly) return;
+
+    await _captureAllSignatures();
     if (!_validateRequiredFields()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please complete all required fields')),
@@ -255,7 +388,7 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
         const SnackBar(content: Text('Form submitted successfully')),
       );
 
-      Navigator.pop(context, true);
+      context.go('/dashboard');
     } catch (e) {
       if (!mounted) return;
 
@@ -298,6 +431,16 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
     );
   }
 
+  Future<String?> _uploadSignature(String dataUrl) async {
+    final client = context.read<ApiClient>();
+    final response = await client.postJson('/student/forms/signature', {
+      'dataUrl': dataUrl,
+    });
+
+    final url = response['url']?.toString();
+    return (url == null || url.isEmpty) ? null : url;
+  }
+
   Widget _buildField(Map<String, dynamic> field) {
     final fieldId = field['id'].toString();
     final type = field['type'].toString();
@@ -333,20 +476,22 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
                 width: 220,
                 child: TextFormField(
                   controller: _textControllers[fieldId],
+                  enabled: !_isReadOnly,
                   maxLines: 1,
                   keyboardType: TextInputType.text,
-                  decoration: _inputDecoration(
-                    hintText: placeholder.isEmpty
-                        ? 'Enter short text'
-                        : placeholder,
-                    fillColor: Colors.white,
-                  ).copyWith(
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 10,
-                    ),
-                  ),
+                  decoration:
+                      _inputDecoration(
+                        hintText: placeholder.isEmpty
+                            ? 'Enter short text'
+                            : placeholder,
+                        fillColor: Colors.white,
+                      ).copyWith(
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 10,
+                        ),
+                      ),
                 ),
               ),
             ],
@@ -377,21 +522,23 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
                 ),
               TextFormField(
                 controller: _textControllers[fieldId],
+                enabled: !_isReadOnly,
                 minLines: 5,
                 maxLines: 5,
                 keyboardType: TextInputType.multiline,
-                decoration: _inputDecoration(
-                  hintText: placeholder.isEmpty
-                      ? 'Enter description'
-                      : placeholder,
-                  fillColor: Colors.white,
-                ).copyWith(
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 12,
-                  ),
-                ),
+                decoration:
+                    _inputDecoration(
+                      hintText: placeholder.isEmpty
+                          ? 'Enter description'
+                          : placeholder,
+                      fillColor: Colors.white,
+                    ).copyWith(
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 12,
+                      ),
+                    ),
               ),
             ],
           ),
@@ -420,23 +567,27 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
                   ),
                 ),
               ...options.map((option) {
-                final selected = _checkboxValues[fieldId]?.contains(option) ?? false;
+                final selected =
+                    _checkboxValues[fieldId]?.contains(option) ?? false;
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Checkbox(
                       value: selected,
-                      onChanged: (value) {
-                        setState(() {
-                          final set = _checkboxValues[fieldId] ?? <String>{};
-                          if (value == true) {
-                            set.add(option);
-                          } else {
-                            set.remove(option);
-                          }
-                          _checkboxValues[fieldId] = set;
-                        });
-                      },
+                      onChanged: _isReadOnly
+                          ? null
+                          : (value) {
+                              setState(() {
+                                final set =
+                                    _checkboxValues[fieldId] ?? <String>{};
+                                if (value == true) {
+                                  set.add(option);
+                                } else {
+                                  set.remove(option);
+                                }
+                                _checkboxValues[fieldId] = set;
+                              });
+                            },
                       visualDensity: VisualDensity.compact,
                     ),
                     Text(option, style: const TextStyle(fontSize: 14)),
@@ -469,7 +620,7 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
                   ),
                 ),
               InkWell(
-                onTap: () => _pickDate(fieldId),
+                onTap: _isReadOnly ? null : () => _pickDate(fieldId),
                 borderRadius: BorderRadius.circular(4),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -528,6 +679,9 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
                 width: 120,
                 child: TextFormField(
                   controller: _yearControllers[fieldId],
+                  enabled: !_isReadOnly,
+                  keyboardType: TextInputType.number,
+                  maxLength: 4,
                   decoration:
                       _inputDecoration(
                         hintText: _yearPlaceholder(field),
@@ -569,58 +723,118 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
                 ),
               Container(
                 width: double.infinity,
-                height: 80,
+                height: 160,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(4),
                   border: Border.all(color: Colors.grey.shade400),
                 ),
-                child: Stack(
-                  children: [
-                    const Center(
-                      child: Icon(
-                        Icons.draw_outlined,
-                        size: 24,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    Positioned(
-                      left: 12,
-                      right: 12,
-                      bottom: 12,
-                      child: Container(
-                        height: 1,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                    Positioned(
-                      left: 12,
-                      bottom: 0,
-                      child: Text(
-                        'Sign here',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey.shade600,
+                child: _isReadOnly &&
+                        (_signatureValues[fieldId] ?? '').isNotEmpty &&
+                        _signatureValues[fieldId]!.startsWith('http')
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: Image.network(
+                          _signatureValues[fieldId]!,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Stack(
+                              children: [
+                                const Center(
+                                  child: Icon(
+                                    Icons.broken_image_outlined,
+                                    size: 28,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                Positioned(
+                                  left: 12,
+                                  right: 12,
+                                  bottom: 12,
+                                  child: Container(
+                                    height: 1,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                                Positioned(
+                                  left: 12,
+                                  bottom: 0,
+                                  child: Text(
+                                    'Unable to load signature',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
+                      )
+                    : Stack(
+                        children: [
+                          IgnorePointer(
+                            ignoring: _isReadOnly,
+                            child: SfSignaturePad(
+                              key: _signaturePadKeys[fieldId],
+                              backgroundColor: Colors.white,
+                              strokeColor: Colors.black,
+                              minimumStrokeWidth: 1.0,
+                              maximumStrokeWidth: 3.0,
+                              onDrawEnd: () {
+                                setState(() {
+                                  _signatureValues[fieldId] = 'drawn';
+                                });
+                              },
+                            ),
+                          ),
+                          Positioned(
+                            left: 12,
+                            right: 12,
+                            bottom: 12,
+                            child: Container(
+                              height: 1,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                          Positioned(
+                            left: 12,
+                            bottom: 0,
+                            child: Text(
+                              'Sign here',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  if (!_isReadOnly) ...[
+                    OutlinedButton.icon(
+                      onPressed: () => _clearSignature(fieldId),
+                      icon: const Icon(Icons.clear, size: 18),
+                      label: const Text('Clear'),
                     ),
+                    const SizedBox(width: 12),
                   ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _textControllers[fieldId],
-                decoration: _inputDecoration(
-                  hintText: placeholder.isEmpty
-                      ? 'Paste signature image URL for now'
-                      : placeholder,
-                  fillColor: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Temporary version: use a URL until drawing/upload is added.',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  Text(
+                    _isReadOnly
+                        ? (((_signatureValues[fieldId] ?? '').isNotEmpty &&
+                                  _signatureValues[fieldId]!.startsWith('http'))
+                              ? 'Submitted signature'
+                              : 'No submitted signature available')
+                        : ((_signatureValues[fieldId] ?? '').isNotEmpty
+                              ? 'Signature captured'
+                              : 'Draw your signature above'),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                  ),
+                ],
               ),
             ],
           ),
@@ -661,11 +875,12 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
     final title = (_form?['title'] ?? 'Form').toString();
     final instructions = (_form?['instructions'] ?? '').toString();
 
+    final submissionStatus = (_submission?['status'] ?? '').toString();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(title: const Text('Fill Form')),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(0),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
@@ -675,6 +890,16 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
           ),
           child: ListView(
             children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 16.0),
+                child: Text(
+                  'Course Content',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Divider(color: Colors.grey.shade300, thickness: 1),
+              const SizedBox(height: 20),
               Text(
                 title,
                 style: const TextStyle(
@@ -704,14 +929,21 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
               const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
-                child: ElevatedButton(
-                  onPressed: _submitting ? null : _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: Text(_submitting ? 'Submitting...' : 'Submit'),
-                ),
+                child: _isReadOnly
+                    ? OutlinedButton(
+                        onPressed: () {
+                          context.go('/dashboard');
+                        },
+                        child: const Text('Back to Dashboard'),
+                      )
+                    : ElevatedButton(
+                        onPressed: _submitting ? null : _submitForm,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text(_submitting ? 'Submitting...' : 'Submit'),
+                      ),
               ),
             ],
           ),
