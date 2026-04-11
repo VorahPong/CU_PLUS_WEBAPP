@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/network/api_client.dart';
-import '../../../features/auth/controller/auth_controller.dart';
-import '../api/announcement_api.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../auth/controller/auth_controller.dart';
+import '../../api/announcement_api.dart';
 
 class CreateAnnouncementPage extends StatefulWidget {
   const CreateAnnouncementPage({

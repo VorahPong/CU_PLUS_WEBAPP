@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/folder.dart';
+import '../widget/folder.dart';
 
 class CourseContentView extends StatefulWidget {
   const CourseContentView({
@@ -17,7 +17,13 @@ class _CourseContentViewState extends State<CourseContentView> {
   bool isEditMode = true;
 
   List<Folder> folders = [
-  Folder(title: "1st Year PLUS Materials"),
+  Folder(
+    title: "1st Year PLUS Materials",
+    children: [
+      Folder(title: "Semester 1"),
+      Folder(title: "Semester 2"),
+    ],
+  ),
   Folder(title: "2nd Year PLUS Materials"),
   Folder(title: "3rd & 4th Year PLUS Materials"),
   Folder(title: "Volunteer Opportunities"),
@@ -51,18 +57,20 @@ class _CourseContentViewState extends State<CourseContentView> {
 
             Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined),
-                  onPressed: () {},
-                ),
+                if (isEditMode)
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: () {},
+                  ),
 
-                OutlinedButton.icon(
-                  onPressed: () {
-                    // later: add subfolder/content
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text("Add Content"),
-                ),
+                if (isEditMode)
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      // later: add subfolder/content
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text("Add Content"),
+                  ),
 
                 IconButton(
                   icon: Icon(
@@ -77,20 +85,21 @@ class _CourseContentViewState extends State<CourseContentView> {
                   },
                 ),
 
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () {
-                    setState(() {
-                      folders.removeAt(index);
-                    });
-                  },
-                ),
+                if (isEditMode)
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () {
+                      setState(() {
+                        folders.removeAt(index);
+                      });
+                    },
+                  ),
               ],
             ),
           ],
         ),
 
-        // 👇 Expanded content (subfolders)
+        // Expanded content (subfolders)
         if (folder.isExpanded)
           Column(
             children: folder.children.map((child) {

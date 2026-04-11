@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/network/api_client.dart';
-import '../api/student_api.dart';
+import '../../../../core/network/api_client.dart';
+import '../../api/student_api.dart';
 import 'package:provider/provider.dart';
-import '../../../features/auth/controller/auth_controller.dart';
+import '../../../auth/controller/auth_controller.dart';
 import 'package:go_router/go_router.dart';
 
 class RegisterStudentView extends StatefulWidget {

@@ -1,13 +1,21 @@
-import 'package:cu_plus_webapp/features/admin/ui/calender_view.dart';
-import 'package:cu_plus_webapp/features/admin/ui/manage_students_view.dart';
-import 'package:cu_plus_webapp/features/admin/ui/announcements_view.dart';
-import 'package:cu_plus_webapp/features/admin/ui/register_student_view.dart';
+import 'package:cu_plus_webapp/features/calender/ui/calender_view.dart';
+import 'package:cu_plus_webapp/features/manageStudents/ui/admin/manage_students_view.dart';
+import 'package:cu_plus_webapp/features/announcements/ui/admin/announcements_view.dart';
+import 'package:cu_plus_webapp/features/manageStudents/ui/admin/register_student_view.dart';
+import 'package:cu_plus_webapp/features/forms/ui/admin/create_form_view.dart';
 
-import 'package:cu_plus_webapp/features/students/ui/announcements_view.dart';
+import 'package:cu_plus_webapp/features/announcements/ui/student/announcements_view.dart';
 
 import 'package:cu_plus_webapp/features/auth/ui/login_page.dart';
+
 import 'package:cu_plus_webapp/features/dashboard/ui/dashboard_shell.dart';
-import 'package:cu_plus_webapp/features/admin/ui/course_content_view.dart';
+import 'package:cu_plus_webapp/features/courseContent/ui/course_content_view.dart';
+
+import 'package:cu_plus_webapp/features/forms/ui/student/student_form_fill_view.dart';
+import 'package:cu_plus_webapp/features/forms/ui/admin/admin_form_preview_view.dart';
+import 'package:cu_plus_webapp/features/forms/ui/admin/admin_form_submissions_view.dart';
+import 'package:cu_plus_webapp/features/forms/ui/admin/admin_form_submission_detail_view.dart';
+
 import 'package:flutter/material.dart';
 import 'features/auth/ui/first_page.dart';
 
@@ -160,6 +168,77 @@ class MyApp extends StatefulWidget {
               return NoTransitionPage(
                 key: state.pageKey,
                 child: StudentAnnouncementsView(email: email),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/admin/forms',
+            pageBuilder: (context, state) {
+              final email = auth.user?.email ?? '';
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: CourseContentView(email: email),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/admin/forms/create',
+            pageBuilder: (context, state) {
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: const CreateFormView(),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/admin/forms/:id/edit',
+            pageBuilder: (context, state) {
+              final formId = state.pathParameters['id']!;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: CreateFormView(formId: formId),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/admin/forms/:id/preview',
+            pageBuilder: (context, state) {
+              final formId = state.pathParameters['id']!;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: AdminFormPreviewView(formId: formId),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/admin/forms/:id/submissions',
+            pageBuilder: (context, state) {
+              final formId = state.pathParameters['id']!;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: AdminFormSubmissionsView(formId: formId),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/admin/forms/submissions/:submissionId/detail',
+            pageBuilder: (context, state) {
+              final submissionId = state.pathParameters['submissionId']!;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: AdminFormSubmissionDetailView(
+                  submissionId: submissionId,
+                ),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/student/forms/:id',
+            pageBuilder: (context, state) {
+              final formId = state.pathParameters['id']!;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: StudentFormFillView(formId: formId),
               );
             },
           ),

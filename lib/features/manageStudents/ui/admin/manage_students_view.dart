@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../../core/network/api_client.dart';
-import '../api/student_api.dart';
+import '../../../../core/network/api_client.dart';
+import '../../api/student_api.dart';
 
 class ManageStudentsView extends StatefulWidget {
   const ManageStudentsView({super.key, required this.email});

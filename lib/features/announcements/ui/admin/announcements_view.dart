@@ -1,10 +1,10 @@
 import 'package:cu_plus_webapp/core/network/api_client.dart';
-import 'package:cu_plus_webapp/features/admin/api/announcement_api.dart';
+import 'package:cu_plus_webapp/features/announcements/api/announcement_api.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'create_announcement_page.dart';
-import 'package:cu_plus_webapp/features/admin/widgets/announcement_feed.dart';
+import 'package:cu_plus_webapp/features/announcements/widgets/announcement_feed.dart';
 
 class AdminAnnoucementsView extends StatefulWidget {
   const AdminAnnoucementsView({
