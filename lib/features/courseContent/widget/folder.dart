@@ -1,13 +1,16 @@
-import 'package:flutter/material.dart';
+import 'content_item.dart';
 
 class Folder {
-  final String title;
+  String title;
   bool isExpanded;
   List<Folder> children;
+  List<ContentItem> contents;
 
   Folder({
     required this.title,
     this.isExpanded = false,
-    this.children = const [],
-  });
+    List<Folder>? children,
+    List<ContentItem>? contents,
+  })  : children = children ?? [],
+        contents = contents ?? [];
 }
