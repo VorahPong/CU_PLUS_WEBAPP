@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:cu_plus_webapp/core/network/api_client.dart';
 import 'package:cu_plus_webapp/features/forms/api/forms_api.dart';
 
+
 class AdminFormSubmissionsView extends StatefulWidget {
   const AdminFormSubmissionsView({super.key, required this.formId});
 
@@ -47,6 +48,51 @@ class _AdminFormSubmissionsViewState extends State<AdminFormSubmissionsView> {
         _error = e.toString().replaceFirst('Exception: ', '');
         _loading = false;
       });
+    }
+  }
+
+  Future<void> _deleteSubmission(String submissionId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Submission'),
+          content: const Text(
+            'Are you sure you want to delete this submission? This will also remove any uploaded signature image.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      final api = FormsApi(context.read<ApiClient>());
+      await api.deleteAdminSubmission(submissionId);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Submission deleted successfully')),
+      );
+
+      await _loadSubmissions();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
     }
   }
 
@@ -249,12 +295,29 @@ class _AdminFormSubmissionsViewState extends State<AdminFormSubmissionsView> {
                                 children: [
                                   _statusChip(_status(submission)),
                                   const SizedBox(height: 10),
-                                  const Text(
-                                    'View',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text(
+                                        'View',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      IconButton(
+                                        tooltip: 'Delete submission',
+                                        onPressed: () {
+                                          _deleteSubmission(submissionId);
+                                        },
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          color: Colors.red,
+                                          size: 20,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),

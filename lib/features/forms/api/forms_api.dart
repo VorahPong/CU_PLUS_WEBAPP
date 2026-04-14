@@ -52,6 +52,14 @@ class FormsApi {
     return Map<String, dynamic>.from(res['submission']);
   }
 
+  Future<void> deleteAdminForm(String formId) async {
+  await _client.deleteJson('/admin/forms/$formId');
+}
+
+  Future<void> deleteAdminSubmission(String submissionId) async {
+    await _client.deleteJson('/admin/forms/submissions/$submissionId');
+  }
+
   Future<Map<String, dynamic>> updateForm({
     required String id,
     required String title,
