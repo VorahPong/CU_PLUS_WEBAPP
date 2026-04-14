@@ -1,4 +1,4 @@
-import 'package:cu_plus_webapp/features/calender/ui/calender_view.dart';
+import 'package:cu_plus_webapp/features/calender/ui/calendar_view.dart';
 import 'package:cu_plus_webapp/features/manageStudents/ui/admin/manage_students_view.dart';
 import 'package:cu_plus_webapp/features/announcements/ui/admin/announcements_view.dart';
 import 'package:cu_plus_webapp/features/manageStudents/ui/admin/register_student_view.dart';
@@ -15,6 +15,9 @@ import 'package:cu_plus_webapp/features/forms/ui/student/student_form_fill_view.
 import 'package:cu_plus_webapp/features/forms/ui/admin/admin_form_preview_view.dart';
 import 'package:cu_plus_webapp/features/forms/ui/admin/admin_form_submissions_view.dart';
 import 'package:cu_plus_webapp/features/forms/ui/admin/admin_form_submission_detail_view.dart';
+import 'package:cu_plus_webapp/features/support/ui/support_view.dart';
+import 'package:cu_plus_webapp/features/setting/ui/setting_view.dart';
+
 
 import 'package:flutter/material.dart';
 import 'features/auth/ui/first_page.dart';
@@ -142,12 +145,11 @@ class MyApp extends StatefulWidget {
             },
           ),
           GoRoute(
-            path: '/dashboard/admin/calendar',
+            path: '/dashboard/calendar',
             pageBuilder: (context, state) {
-              final email = auth.user?.email ?? '';
               return NoTransitionPage(
                 key: state.pageKey,
-                child: CalenderView(email: email),
+                child: CalendarView(),
               );
             },
           ),
@@ -240,6 +242,18 @@ class MyApp extends StatefulWidget {
                 key: state.pageKey,
                 child: StudentFormFillView(formId: formId),
               );
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/support',
+            pageBuilder: (context, state) {
+              return NoTransitionPage(key: state.pageKey, child: SupportView());
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/setting',
+            pageBuilder: (context, state) {
+              return NoTransitionPage(key: state.pageKey, child: SettingView());
             },
           ),
         ],

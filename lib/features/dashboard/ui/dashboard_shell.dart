@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../widgets/side_bar.dart';
 import '../widgets/top_nav_bar.dart';
 import '../api/notifications_api.dart';
+import '../../setting/api/settings_api.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/extensions/auth_extension.dart';
 
@@ -20,6 +21,7 @@ class _DashboardShellState extends State<DashboardShell> {
   late SidebarItem _selectedItem;
   int _unreadNotificationCount = 0;
   List<Map<String, dynamic>> _notifications = [];
+  Map<String, dynamic>? _currentUser;
 
   @override
   void initState() {
@@ -27,6 +29,7 @@ class _DashboardShellState extends State<DashboardShell> {
     _selectedItem = SidebarItem.courseContent;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadNotifications();
+      _loadCurrentUser();
     });
   }
 
@@ -46,6 +49,23 @@ class _DashboardShellState extends State<DashboardShell> {
       setState(() {
         _notifications = [];
         _unreadNotificationCount = 0;
+      });
+    }
+  }
+
+  Future<void> _loadCurrentUser() async {
+    try {
+      final api = SettingsApi(context.read<ApiClient>());
+      final user = await api.getProfile();
+
+      if (!mounted) return;
+      setState(() {
+        _currentUser = user;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _currentUser = null;
       });
     }
   }
@@ -115,7 +135,7 @@ class _DashboardShellState extends State<DashboardShell> {
         context.go('/dashboard/admin/announcements');
         break;
       case SidebarItem.calendar:
-        context.go('/dashboard/admin/calendar');
+        context.go('/dashboard/calendar');
         break;
       case SidebarItem.adminManageStudents:
         context.go('/dashboard/admin/students');
@@ -158,7 +178,7 @@ class _DashboardShellState extends State<DashboardShell> {
           routeItem = SidebarItem.adminAnnouncements;
         } else if (loc.startsWith('/dashboard/student/announcements')) {
           routeItem = SidebarItem.announcements;
-        } else if (loc.startsWith('/dashboard/admin/calendar')) {
+        } else if (loc.startsWith('/dashboard/calendar')) {
           routeItem = SidebarItem.calendar;
         } else if (loc.startsWith('/dashboard/support')) {
           routeItem = SidebarItem.support;
@@ -181,6 +201,7 @@ class _DashboardShellState extends State<DashboardShell> {
             onDeleteNotification: _handleDeleteNotification,
             onClearAllNotifications: _handleClearAllNotifications,
             username: email,
+            profileImageUrl: _currentUser?['profileImageUrl']?.toString(),
             //\automaticallyImplyLeading: false,
           ),
           body: isDesktop

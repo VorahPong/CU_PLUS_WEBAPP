@@ -6,6 +6,7 @@ class NavBar extends StatelessWidget implements PreferredSizeWidget {
     this.leading,
     this.onMenuPressed,
     this.username = "Persephone",
+    this.profileImageUrl,
     this.showMenu = true,
     this.automaticallyImplyLeading = false,
     this.onNotificationsPressed,
@@ -19,6 +20,7 @@ class NavBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? leading;
   final VoidCallback? onMenuPressed;
   final String username;
+  final String? profileImageUrl;
   final bool showMenu;
   final bool automaticallyImplyLeading;
   final VoidCallback? onNotificationsPressed;
@@ -322,7 +324,16 @@ class NavBar extends StatelessWidget implements PreferredSizeWidget {
                 ],
               ),
               const SizedBox(width: 10),
-              const CircleAvatar(child: Icon(Icons.person, size: 20)),
+              CircleAvatar(
+                backgroundImage: profileImageUrl != null &&
+                        profileImageUrl!.trim().isNotEmpty
+                    ? NetworkImage(profileImageUrl!.trim())
+                    : null,
+                child: profileImageUrl == null ||
+                        profileImageUrl!.trim().isEmpty
+                    ? const Icon(Icons.person, size: 20)
+                    : null,
+              ),
               const SizedBox(width: 8),
               Text(
                 username,
