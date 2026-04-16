@@ -162,13 +162,6 @@ class _AdminAnnoucementsViewState extends State<AdminAnnoucementsView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Logged in as: ${widget.email}",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
                   const SizedBox(height: 20),
                   Expanded(
                     child: AnnouncementFeed(

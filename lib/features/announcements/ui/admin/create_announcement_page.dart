@@ -6,10 +6,7 @@ import '../../../auth/controller/auth_controller.dart';
 import '../../api/announcement_api.dart';
 
 class CreateAnnouncementPage extends StatefulWidget {
-  const CreateAnnouncementPage({
-    super.key,
-    this.announcement,
-  });
+  const CreateAnnouncementPage({super.key, this.announcement});
 
   final Map<String, dynamic>? announcement;
 
@@ -131,11 +128,11 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
           content: Text(
             saveAsDraft
                 ? (_isEditing
-                    ? "Announcement draft saved successfully"
-                    : "Announcement draft created successfully")
+                      ? "Announcement draft saved successfully"
+                      : "Announcement draft created successfully")
                 : (_isEditing
-                    ? "Announcement updated successfully"
-                    : "Announcement created successfully"),
+                      ? "Announcement updated successfully"
+                      : "Announcement created successfully"),
           ),
         ),
       );
@@ -161,171 +158,173 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
     final auth = context.watch<AuthController>();
 
     if (!auth.isAdmin) {
-      return const Center(child: Text("Access denied"));
+      return const Center(child: SelectableText("Access denied"));
     }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 16.0),
-                child: Text(
-                  _isEditing ? "Edit Announcement/Post" : "Announcement/Post",
-                  style: const TextStyle(fontSize: 24),
+        child: SelectionArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 16.0),
+                  child: SelectableText(
+                    _isEditing ? "Edit Announcement/Post" : "Announcement/Post",
+                    style: const TextStyle(fontSize: 24),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Divider(color: Colors.grey.shade300, thickness: 1),
-              const SizedBox(height: 16),
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  color: Colors.white,
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Wrap(
-                            spacing: 20,
-                            runSpacing: 8,
-                            crossAxisAlignment: WrapCrossAlignment.center,
+                const SizedBox(height: 12),
+                Divider(color: Colors.grey.shade300, thickness: 1),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    color: Colors.white,
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Wrap(
+                              spacing: 20,
+                              runSpacing: 8,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                const SelectableText(
+                                  "To:",
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                                _buildCheckBox(
+                                  label: "Everyone",
+                                  value: everyone,
+                                  onChanged: _handleEveryoneChanged,
+                                ),
+                                _buildCheckBox(
+                                  label: "First-Year",
+                                  value: firstYear,
+                                  onChanged: (value) =>
+                                      _handleYearChanged("first", value),
+                                ),
+                                _buildCheckBox(
+                                  label: "Second-Year",
+                                  value: secondYear,
+                                  onChanged: (value) =>
+                                      _handleYearChanged("second", value),
+                                ),
+                                _buildCheckBox(
+                                  label: "Third-Year",
+                                  value: thirdYear,
+                                  onChanged: (value) =>
+                                      _handleYearChanged("third", value),
+                                ),
+                                _buildCheckBox(
+                                  label: "Fourth-Year",
+                                  value: fourthYear,
+                                  onChanged: (value) =>
+                                      _handleYearChanged("fourth", value),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _messageController,
+                              expands: true,
+                              minLines: null,
+                              maxLines: null,
+                              textAlignVertical: TextAlignVertical.top,
+                              validator: (value) {
+                                return null;
+                              },
+                              decoration: _inputDecoration(
+                                hint: "Type announcement here...",
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          if (_error != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: SelectableText(
+                                  _error!,
+                                  style: const TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              const Text(
-                                "To:",
-                                style: TextStyle(fontSize: 14),
+                              OutlinedButton(
+                                onPressed: _loading ? null : _cancelPost,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.black87,
+                                  side: BorderSide(color: Colors.grey.shade400),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 22,
+                                    vertical: 14,
+                                  ),
+                                ),
+                                child: const Text("Cancel"),
                               ),
-                              _buildCheckBox(
-                                label: "Everyone",
-                                value: everyone,
-                                onChanged: _handleEveryoneChanged,
+                              const SizedBox(width: 12),
+                              OutlinedButton(
+                                onPressed: _loading
+                                    ? null
+                                    : () => _onSubmit(saveAsDraft: true),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.black87,
+                                  side: BorderSide(color: Colors.grey.shade400),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 22,
+                                    vertical: 14,
+                                  ),
+                                ),
+                                child: const Text("Save as Draft"),
                               ),
-                              _buildCheckBox(
-                                label: "First-Year",
-                                value: firstYear,
-                                onChanged: (value) =>
-                                    _handleYearChanged("first", value),
-                              ),
-                              _buildCheckBox(
-                                label: "Second-Year",
-                                value: secondYear,
-                                onChanged: (value) =>
-                                    _handleYearChanged("second", value),
-                              ),
-                              _buildCheckBox(
-                                label: "Third-Year",
-                                value: thirdYear,
-                                onChanged: (value) =>
-                                    _handleYearChanged("third", value),
-                              ),
-                              _buildCheckBox(
-                                label: "Fourth-Year",
-                                value: fourthYear,
-                                onChanged: (value) =>
-                                    _handleYearChanged("fourth", value),
+                              const SizedBox(width: 12),
+                              ElevatedButton(
+                                onPressed: _loading
+                                    ? null
+                                    : () => _onSubmit(saveAsDraft: false),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 22,
+                                    vertical: 14,
+                                  ),
+                                ),
+                                child: _loading
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Text(
+                                        _isEditing ? "Save Changes" : "Confirm",
+                                      ),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 24),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _messageController,
-                            expands: true,
-                            minLines: null,
-                            maxLines: null,
-                            textAlignVertical: TextAlignVertical.top,
-                            validator: (value) {
-                              return null;
-                            },
-                            decoration: _inputDecoration(
-                              hint: "Type announcement here...",
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        if (_error != null)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                _error!,
-                                style: const TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            OutlinedButton(
-                              onPressed: _loading ? null : _cancelPost,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.black87,
-                                side: BorderSide(color: Colors.grey.shade400),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 22,
-                                  vertical: 14,
-                                ),
-                              ),
-                              child: const Text("Cancel"),
-                            ),
-                            const SizedBox(width: 12),
-                            OutlinedButton(
-                              onPressed: _loading
-                                  ? null
-                                  : () => _onSubmit(saveAsDraft: true),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.black87,
-                                side: BorderSide(color: Colors.grey.shade400),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 22,
-                                  vertical: 14,
-                                ),
-                              ),
-                              child: const Text("Save as Draft"),
-                            ),
-                            const SizedBox(width: 12),
-                            ElevatedButton(
-                              onPressed: _loading
-                                  ? null
-                                  : () => _onSubmit(saveAsDraft: false),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 22,
-                                  vertical: 14,
-                                ),
-                              ),
-                              child: _loading
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : Text(
-                                      _isEditing ? "Save Changes" : "Confirm",
-                                    ),
-                            ),
-                          ],
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -340,7 +339,7 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(label),
+        SelectableText(label),
         Checkbox(
           value: value,
           onChanged: onChanged,

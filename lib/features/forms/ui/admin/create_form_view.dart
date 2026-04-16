@@ -16,18 +16,13 @@ class CreateFormView extends StatefulWidget {
 class _CreateFormViewState extends State<CreateFormView> {
   final _formKey = GlobalKey<FormState>();
 
-  final _titleCtrl = TextEditingController(
-    text: "1st Year - Mid-Semester Grade Check - Fall",
-  );
+  final _titleCtrl = TextEditingController();
   final _descriptionCtrl = TextEditingController();
-  final _instructionsCtrl = TextEditingController(
-    text:
-        "Please submit a Mid-Semester Grade Check form along with a copy of your class schedule. If you were unable to obtain signatures on your form verifying your grades please also submit an email from your instructor/professor verifying your grade.",
-  );
+  final _instructionsCtrl = TextEditingController();
 
   String? _year;
-  DateTime? _dueDate = DateTime(2025, 10, 20, 23, 49);
-  bool _hasDueDate = true;
+  DateTime? _dueDate;
+  bool _hasDueDate = false;
   int _selectedHour = 11;
   int _selectedMinute = 49;
   String _selectedPeriod = 'PM';
@@ -419,6 +414,7 @@ class _CreateFormViewState extends State<CreateFormView> {
                               decoration: const InputDecoration(
                                 border: InputBorder.none,
                                 isDense: true,
+                                hintText: "Enter form title",
                               ),
                               validator: (v) => (v == null || v.trim().isEmpty)
                                   ? "Title is required"
@@ -728,7 +724,7 @@ class _CreateFormViewState extends State<CreateFormView> {
         TextFormField(
           controller: _instructionsCtrl,
           maxLines: 6,
-          decoration: _inputDecoration(),
+          decoration: _inputDecoration(hintText: "Enter assignment instructions..."),
         ),
       ],
     );
@@ -747,7 +743,7 @@ class _CreateFormViewState extends State<CreateFormView> {
       child: _fields.isEmpty
           ? Center(
               child: Text(
-                "Empty",
+                "No fields yet — add inputs from the right",
                 style: TextStyle(
                   fontSize: 22,
                   color: Colors.grey.shade500,
@@ -942,7 +938,7 @@ class _BuilderFieldTile extends StatelessWidget {
             children: [
               if (leftText.isNotEmpty)
                 Text(
-                  leftText,
+                  leftText.isEmpty ? "Field label" : leftText,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -985,7 +981,7 @@ class _BuilderFieldTile extends StatelessWidget {
             children: [
               if (leftText.isNotEmpty)
                 Text(
-                  leftText,
+                  leftText.isEmpty ? "Field label" : leftText,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -1038,7 +1034,7 @@ class _BuilderFieldTile extends StatelessWidget {
             children: [
               if (leftText.isNotEmpty)
                 Text(
-                  leftText,
+                  leftText.isEmpty ? "Field label" : leftText,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -1084,7 +1080,7 @@ class _BuilderFieldTile extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(
-                    leftText,
+                    leftText.isEmpty ? "Field label" : leftText,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -1149,7 +1145,7 @@ class _BuilderFieldTile extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(
-                    topText,
+                    topText.isEmpty ? "Field label" : topText,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -1197,7 +1193,7 @@ class _BuilderFieldTile extends StatelessWidget {
             children: [
               if (leftText.isNotEmpty)
                 Text(
-                  leftText,
+                  leftText.isEmpty ? "Field label" : leftText,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
