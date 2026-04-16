@@ -106,6 +106,7 @@ class AnnouncementFeed extends StatelessWidget {
           date: _formatDate(announcement['createdAt']),
           audience: _buildAudienceText(announcement),
           message: announcement['message'] ?? "",
+          status: (announcement['status'] ?? 'published').toString(),
           onEdit: onEdit != null ? () => onEdit!(index) : null,
           onDelete: onDelete != null ? () => onDelete!(index) : null,
         );
@@ -120,6 +121,7 @@ class _AnnouncementCard extends StatelessWidget {
     required this.date,
     required this.audience,
     required this.message,
+    required this.status,
     this.onEdit,
     this.onDelete,
   });
@@ -128,12 +130,14 @@ class _AnnouncementCard extends StatelessWidget {
   final String date;
   final String audience;
   final String message;
+  final String status;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
     final showActions = onEdit != null || onDelete != null;
+    final isDraft = status.toLowerCase() == 'draft';
 
     return Container(
       width: double.infinity,
@@ -166,12 +170,35 @@ class _AnnouncementCard extends StatelessWidget {
                 Wrap(
                   spacing: 8,
                   runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
                       author.isEmpty ? "Unknown author" : author,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDraft
+                            ? Colors.grey.shade200
+                            : Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        isDraft ? 'Draft' : 'Published',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isDraft
+                              ? Colors.grey.shade800
+                              : Colors.green.shade700,
+                        ),
                       ),
                     ),
                     Text(
@@ -183,6 +210,16 @@ class _AnnouncementCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (isDraft) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'Not visible to students until published.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 8),
                 Text(
                   message,

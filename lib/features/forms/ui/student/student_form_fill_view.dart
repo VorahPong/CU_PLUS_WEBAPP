@@ -139,8 +139,8 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
         switch (type) {
           case 'text':
           case 'textarea':
-            _textControllers[fieldId]?.text =
-                (answer['valueText'] ?? '').toString();
+            _textControllers[fieldId]?.text = (answer['valueText'] ?? '')
+                .toString();
             break;
           case 'checkbox':
             final rawValue = (answer['valueText'] ?? '').toString();
@@ -158,12 +158,12 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
             }
             break;
           case 'year':
-            _yearControllers[fieldId]?.text =
-                (answer['valueText'] ?? '').toString();
+            _yearControllers[fieldId]?.text = (answer['valueText'] ?? '')
+                .toString();
             break;
           case 'signature':
-            _signatureValues[fieldId] =
-                (answer['valueSignatureUrl'] ?? '').toString();
+            _signatureValues[fieldId] = (answer['valueSignatureUrl'] ?? '')
+                .toString();
             break;
         }
       }
@@ -256,14 +256,19 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
       final fieldId = field['id'].toString();
       final type = field['type'].toString();
 
-      if (type == 'signature') {
-        final dataUrl = await _captureSignatureAsDataUrl(fieldId);
-        if (dataUrl != null) {
-          final uploadedUrl = await _uploadSignature(dataUrl);
-          if (uploadedUrl != null) {
-            _signatureValues[fieldId] = uploadedUrl;
-          }
-        }
+      if (type != 'signature') continue;
+
+      final currentValue = (_signatureValues[fieldId] ?? '').trim();
+
+      // Only upload when the student has newly drawn a signature.
+      if (currentValue != 'drawn') continue;
+
+      final dataUrl = await _captureSignatureAsDataUrl(fieldId);
+      if (dataUrl == null) continue;
+
+      final uploadedUrl = await _uploadSignature(fieldId, dataUrl);
+      if (uploadedUrl != null) {
+        _signatureValues[fieldId] = uploadedUrl;
       }
     }
   }
@@ -405,6 +410,45 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
     }
   }
 
+  Future<void> _saveDraft() async {
+    if (_isReadOnly) return;
+
+    await _captureAllSignatures();
+
+    setState(() {
+      _submitting = true;
+    });
+
+    try {
+      final api = FormsApi(context.read<ApiClient>());
+      await api.submitStudentForm(
+        formId: widget.formId,
+        answers: _buildAnswersPayload(),
+        submitNow: false,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Draft saved successfully')));
+
+      await _loadForm();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+        });
+      }
+    }
+  }
+
   InputDecoration _inputDecoration({
     String? hintText,
     Color fillColor = const Color(0xFFF3F3F3),
@@ -432,11 +476,28 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
     );
   }
 
-  Future<String?> _uploadSignature(String dataUrl) async {
-    final client = context.read<ApiClient>();
-    final response = await client.postJson('/student/forms/signature', {
-      'dataUrl': dataUrl,
-    });
+  Future<String?> _uploadSignature(String fieldId, String dataUrl) async {
+    final api = FormsApi(context.read<ApiClient>());
+
+    String? oldUrl;
+    final existingAnswers = ((_submission?['answers'] as List?) ?? [])
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e));
+
+    for (final answer in existingAnswers) {
+      if (answer['formFieldId']?.toString() == fieldId) {
+        final value = (answer['valueSignatureUrl'] ?? '').toString().trim();
+        if (value.startsWith('http')) {
+          oldUrl = value;
+        }
+        break;
+      }
+    }
+
+    final response = await api.uploadStudentSignature(
+      dataUrl: dataUrl,
+      oldUrl: oldUrl,
+    );
 
     final url = response['url']?.toString();
     return (url == null || url.isEmpty) ? null : url;
@@ -730,48 +791,73 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
                   borderRadius: BorderRadius.circular(4),
                   border: Border.all(color: Colors.grey.shade400),
                 ),
-                child: _isReadOnly &&
-                        (_signatureValues[fieldId] ?? '').isNotEmpty &&
-                        _signatureValues[fieldId]!.startsWith('http')
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: Image.network(
-                          _signatureValues[fieldId]!,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Stack(
-                              children: [
-                                const Center(
-                                  child: Icon(
-                                    Icons.broken_image_outlined,
-                                    size: 28,
-                                    color: Colors.grey,
+                child:
+                    ((_signatureValues[fieldId] ?? '').isNotEmpty &&
+                        _signatureValues[fieldId]!.startsWith('http'))
+                    ? Stack(
+                        children: [
+                          Positioned.fill(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: Image.network(
+                                _signatureValues[fieldId]!,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Stack(
+                                    children: [
+                                      const Center(
+                                        child: Icon(
+                                          Icons.broken_image_outlined,
+                                          size: 28,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        left: 12,
+                                        right: 12,
+                                        bottom: 12,
+                                        child: Container(
+                                          height: 1,
+                                          color: Colors.grey.shade500,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        left: 12,
+                                        bottom: 0,
+                                        child: Text(
+                                          'Unable to load signature',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          if (!_isReadOnly)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: ElevatedButton.icon(
+                                onPressed: () => _clearSignature(fieldId),
+                                icon: const Icon(Icons.edit, size: 16),
+                                label: const Text('Replace'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black87,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
                                   ),
+                                  textStyle: const TextStyle(fontSize: 12),
                                 ),
-                                Positioned(
-                                  left: 12,
-                                  right: 12,
-                                  bottom: 12,
-                                  child: Container(
-                                    height: 1,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                ),
-                                Positioned(
-                                  left: 12,
-                                  bottom: 0,
-                                  child: Text(
-                                    'Unable to load signature',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
+                              ),
+                            ),
+                        ],
                       )
                     : Stack(
                         children: [
@@ -816,7 +902,9 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  if (!_isReadOnly) ...[
+                  if (!_isReadOnly &&
+                      !(((_signatureValues[fieldId] ?? '').isNotEmpty) &&
+                          _signatureValues[fieldId]!.startsWith('http'))) ...[
                     OutlinedButton.icon(
                       onPressed: () => _clearSignature(fieldId),
                       icon: const Icon(Icons.clear, size: 18),
@@ -830,9 +918,12 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
                                   _signatureValues[fieldId]!.startsWith('http'))
                               ? 'Submitted signature'
                               : 'No submitted signature available')
-                        : ((_signatureValues[fieldId] ?? '').isNotEmpty
-                              ? 'Signature captured'
-                              : 'Draw your signature above'),
+                        : (((_signatureValues[fieldId] ?? '').isNotEmpty &&
+                                  _signatureValues[fieldId]!.startsWith('http'))
+                              ? 'Saved signature loaded'
+                              : ((_signatureValues[fieldId] ?? '').isNotEmpty
+                                    ? 'Signature captured'
+                                    : 'Draw your signature above')),
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
                   ),
                 ],
@@ -876,7 +967,7 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
     final title = (_form?['title'] ?? 'Form').toString();
     final instructions = (_form?['instructions'] ?? '').toString();
 
-    final submissionStatus = (_submission?['status'] ?? '').toString();
+    // final submissionStatus = (_submission?['status'] ?? '').toString();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -966,13 +1057,25 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
                         },
                         child: const Text('Back to Dashboard'),
                       )
-                    : ElevatedButton(
-                        onPressed: _submitting ? null : _submitForm,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: Text(_submitting ? 'Submitting...' : 'Submit'),
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          OutlinedButton(
+                            onPressed: _submitting ? null : _saveDraft,
+                            child: const Text('Save as Draft'),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton(
+                            onPressed: _submitting ? null : _submitForm,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: Text(
+                              _submitting ? 'Submitting...' : 'Submit',
+                            ),
+                          ),
+                        ],
                       ),
               ),
             ],

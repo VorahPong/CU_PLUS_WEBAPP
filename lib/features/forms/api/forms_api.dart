@@ -96,4 +96,17 @@ class FormsApi {
       'answers': answers,
     });
   }
+
+  Future<Map<String, dynamic>> uploadStudentSignature({
+    required String dataUrl,
+    String? oldUrl,
+  }) async {
+    final body = <String, dynamic>{'dataUrl': dataUrl};
+    if (oldUrl != null && oldUrl.isNotEmpty) {
+      body['oldUrl'] = oldUrl;
+    }
+
+    final res = await _client.postJson('/student/forms/signature', body);
+    return Map<String, dynamic>.from(res);
+  }
 }

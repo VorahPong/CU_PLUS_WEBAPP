@@ -12,6 +12,7 @@ class AnnouncementApi {
     required bool secondYear,
     required bool thirdYear,
     required bool fourthYear,
+    bool saveAsDraft = false,
   }) async {
     final response = await _client.postJson('/admin/announcements', {
       "message": message,
@@ -20,6 +21,7 @@ class AnnouncementApi {
       "secondYear": secondYear,
       "thirdYear": thirdYear,
       "fourthYear": fourthYear,
+      "saveAsDraft": saveAsDraft,
     });
 
     if (response.isEmpty) {
@@ -58,6 +60,7 @@ class AnnouncementApi {
     required bool secondYear,
     required bool thirdYear,
     required bool fourthYear,
+    bool saveAsDraft = false,
   }) async {
     final response = await _client.putJson('/admin/announcements/$id', {
       "message": message,
@@ -66,6 +69,7 @@ class AnnouncementApi {
       "secondYear": secondYear,
       "thirdYear": thirdYear,
       "fourthYear": fourthYear,
+      "saveAsDraft": saveAsDraft,
     });
 
     if (response.isEmpty) {

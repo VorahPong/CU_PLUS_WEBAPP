@@ -79,13 +79,13 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
     });
   }
 
-  Future<void> _onSubmit() async {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _onSubmit({bool saveAsDraft = false}) async {
+    if (!saveAsDraft && !_formKey.currentState!.validate()) return;
 
     final hasAudience =
         everyone || firstYear || secondYear || thirdYear || fourthYear;
 
-    if (!hasAudience) {
+    if (!saveAsDraft && !hasAudience) {
       setState(() {
         _error = "Please select at least one audience";
       });
@@ -110,6 +110,7 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
           secondYear: secondYear,
           thirdYear: thirdYear,
           fourthYear: fourthYear,
+          saveAsDraft: saveAsDraft,
         );
       } else {
         await announcementApi.createAnnouncement(
@@ -119,6 +120,7 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
           secondYear: secondYear,
           thirdYear: thirdYear,
           fourthYear: fourthYear,
+          saveAsDraft: saveAsDraft,
         );
       }
 
@@ -127,9 +129,13 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _isEditing
-                ? "Announcement updated successfully"
-                : "Announcement created successfully",
+            saveAsDraft
+                ? (_isEditing
+                    ? "Announcement draft saved successfully"
+                    : "Announcement draft created successfully")
+                : (_isEditing
+                    ? "Announcement updated successfully"
+                    : "Announcement created successfully"),
           ),
         ),
       );
@@ -237,9 +243,6 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
                             maxLines: null,
                             textAlignVertical: TextAlignVertical.top,
                             validator: (value) {
-                              if ((value ?? "").trim().isEmpty) {
-                                return "Announcement message is required";
-                              }
                               return null;
                             },
                             decoration: _inputDecoration(
@@ -275,8 +278,25 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
                               child: const Text("Cancel"),
                             ),
                             const SizedBox(width: 12),
+                            OutlinedButton(
+                              onPressed: _loading
+                                  ? null
+                                  : () => _onSubmit(saveAsDraft: true),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.black87,
+                                side: BorderSide(color: Colors.grey.shade400),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 22,
+                                  vertical: 14,
+                                ),
+                              ),
+                              child: const Text("Save as Draft"),
+                            ),
+                            const SizedBox(width: 12),
                             ElevatedButton(
-                              onPressed: _loading ? null : _onSubmit,
+                              onPressed: _loading
+                                  ? null
+                                  : () => _onSubmit(saveAsDraft: false),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.black,
                                 foregroundColor: Colors.white,

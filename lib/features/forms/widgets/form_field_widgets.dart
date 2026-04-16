@@ -371,11 +371,11 @@ class SignatureFormFieldWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final normalizedImageUrl = imageUrl?.trim();
     final showImage =
-        readOnly &&
-        imageUrl != null &&
-        imageUrl!.isNotEmpty &&
-        imageUrl!.startsWith('http');
+        normalizedImageUrl != null &&
+        normalizedImageUrl.isNotEmpty &&
+        normalizedImageUrl.startsWith('http');
 
     return FormFieldShell(
       child: Column(
@@ -402,17 +402,44 @@ class SignatureFormFieldWidget extends StatelessWidget {
               border: Border.all(color: Colors.grey.shade400),
             ),
             child: showImage
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: Image.network(
-                      imageUrl!,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _SignatureFallback(
-                          message: 'Unable to load signature',
-                        );
-                      },
-                    ),
+                ? Stack(
+                    children: [
+                      Positioned.fill(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: Image.network(
+                            normalizedImageUrl!,
+                            key: ValueKey(normalizedImageUrl),
+                            gaplessPlayback: true,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return _SignatureFallback(
+                                message: 'Unable to load signature',
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      if (!readOnly && onClear != null)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: ElevatedButton.icon(
+                            onPressed: onClear,
+                            icon: const Icon(Icons.edit, size: 16),
+                            label: const Text('Replace'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black87,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              textStyle: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ),
+                    ],
                   )
                 : Stack(
                     children: [
@@ -450,7 +477,7 @@ class SignatureFormFieldWidget extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              if (!readOnly && onClear != null) ...[
+              if (!readOnly && onClear != null && !showImage) ...[
                 OutlinedButton.icon(
                   onPressed: onClear,
                   icon: const Icon(Icons.clear, size: 18),

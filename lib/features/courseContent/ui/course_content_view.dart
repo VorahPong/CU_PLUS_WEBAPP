@@ -5,6 +5,8 @@ import 'package:cu_plus_webapp/core/network/api_client.dart';
 import 'package:cu_plus_webapp/features/courseContent/api/course_content_api.dart';
 import 'package:cu_plus_webapp/features/forms/api/forms_api.dart';
 import 'package:cu_plus_webapp/core/extensions/auth_extension.dart';
+import 'dart:js_interop';
+import 'package:web/web.dart' as web;
 
 class CourseContentView extends StatefulWidget {
   const CourseContentView({super.key, required this.email});
@@ -25,6 +27,9 @@ class _CourseContentViewState extends State<CourseContentView> {
   List<dynamic> _folders = [];
   List<dynamic> _rootForms = [];
   final Set<String> _expandedFolderIds = <String>{};
+
+  static const String _expandedFoldersStorageKey =
+      'course_content_expanded_folders';
 
   bool isEditMode = true;
 
@@ -66,7 +71,12 @@ class _CourseContentViewState extends State<CourseContentView> {
 
       final folders = (data['folders'] as List?) ?? const [];
       final rootForms = (data['rootForms'] as List?) ?? const [];
-      final expandedIds = _collectFolderIds(folders);
+
+      final validFolderIds = _collectFolderIds(folders).toSet();
+      final savedExpandedIds = _loadExpandedFolderIdsFromStorage();
+      final restoredExpandedIds = savedExpandedIds
+          .where(validFolderIds.contains)
+          .toSet();
 
       if (!mounted) return;
 
@@ -75,7 +85,7 @@ class _CourseContentViewState extends State<CourseContentView> {
         _rootForms = rootForms;
         _expandedFolderIds
           ..clear()
-          ..addAll(expandedIds);
+          ..addAll(restoredExpandedIds);
         _contentLoading = false;
       });
     } catch (e) {
@@ -115,6 +125,25 @@ class _CourseContentViewState extends State<CourseContentView> {
         _loading = false;
       });
     }
+  }
+
+  Set<String> _loadExpandedFolderIdsFromStorage() {
+    final storage = web.window.localStorage;
+    final raw = storage.getItem(_expandedFoldersStorageKey);
+
+    if (raw == null || raw.isEmpty) return <String>{};
+
+    return raw
+        .split(',')
+        .map((id) => id.trim())
+        .where((id) => id.isNotEmpty)
+        .toSet();
+  }
+
+  void _saveExpandedFolderIdsToStorage() {
+    final storage = web.window.localStorage;
+
+    storage.setItem(_expandedFoldersStorageKey, _expandedFolderIds.join(','));
   }
 
   String _folderId(Map<String, dynamic> folder) {
@@ -892,6 +921,8 @@ class _CourseContentViewState extends State<CourseContentView> {
                           _expandedFolderIds.add(folderId);
                         }
                       });
+
+                      _saveExpandedFolderIdsToStorage();
                     },
                   ),
                   if (canEdit)
