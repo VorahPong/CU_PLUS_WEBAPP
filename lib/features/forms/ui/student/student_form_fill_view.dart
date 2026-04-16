@@ -951,7 +951,10 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(_error!, style: const TextStyle(color: Colors.red)),
+                SelectableText(
+                  _error!,
+                  style: const TextStyle(color: Colors.red),
+                ),
                 const SizedBox(height: 12),
                 OutlinedButton(
                   onPressed: _loadForm,
@@ -980,8 +983,9 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(6),
           ),
-          child: ListView(
-            children: [
+          child: SelectionArea(
+            child: ListView(
+              children: [
               const Padding(
                 padding: EdgeInsets.only(left: 16.0),
                 child: Text(
@@ -1078,7 +1082,7 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
                         ],
                       ),
               ),
-            ],
+            ]),
           ),
         ),
       ),
