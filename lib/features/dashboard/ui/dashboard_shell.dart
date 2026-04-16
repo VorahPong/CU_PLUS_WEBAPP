@@ -5,6 +5,7 @@ import '../widgets/side_bar.dart';
 import '../widgets/top_nav_bar.dart';
 import '../api/notifications_api.dart';
 import '../../setting/api/settings_api.dart';
+import '../../setting/profile_refresh_notifier.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/extensions/auth_extension.dart';
 
@@ -27,6 +28,7 @@ class _DashboardShellState extends State<DashboardShell> {
   void initState() {
     super.initState();
     _selectedItem = SidebarItem.courseContent;
+    profileRefreshNotifier.addListener(_handleProfileRefresh);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadNotifications();
       _loadCurrentUser();
@@ -68,6 +70,16 @@ class _DashboardShellState extends State<DashboardShell> {
         _currentUser = null;
       });
     }
+  }
+
+  void _handleProfileRefresh() {
+    _loadCurrentUser();
+  }
+
+  @override
+  void dispose() {
+    profileRefreshNotifier.removeListener(_handleProfileRefresh);
+    super.dispose();
   }
 
   Future<void> _handleNotificationTap(Map<String, dynamic> notification) async {
