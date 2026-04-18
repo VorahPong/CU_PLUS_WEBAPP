@@ -272,3 +272,274 @@ Fix:
 ---
 
 This system provides a scalable, flexible form builder similar to Google Forms.
+# 📝 Forms Flow (CU Plus Web App)
+
+This document explains how the dynamic form system works across the frontend (Flutter) and backend (Node.js + Prisma), including recent improvements such as **grading** and **return-to-draft** workflows.
+
+---
+
+## 🧠 Overview
+
+The Forms system allows:
+
+- **Admins** → create, manage, review, grade, and return submissions
+- **Students** → fill, submit, and review forms
+
+Forms are **fully dynamic**, meaning fields are created by admins and rendered by the frontend at runtime.
+
+---
+
+## 🔄 Full Flow
+
+### 1. Admin Creates Form
+
+Admin builds a form with:
+
+- Title
+- Description / Instructions
+- Optional Year targeting
+- Dynamic fields
+
+Supported field types:
+
+- `text`
+- `textarea`
+- `checkbox`
+- `date`
+- `year`
+- `signature`
+
+---
+
+### 2. Form Stored in Database
+
+Tables involved:
+
+```
+FormTemplate
+FormField
+```
+
+---
+
+### 3. Student Views Forms
+
+```http
+GET /student/forms
+```
+
+---
+
+### 4. Student Opens Form
+
+```http
+GET /student/forms/:id
+```
+
+---
+
+### 5. Dynamic UI Rendering
+
+The frontend builds UI based on `form.fields`.
+
+---
+
+### 6. Student Fills Form
+
+State stored in:
+
+- TextEditingControllers
+- Maps
+- Signature image
+
+---
+
+### 7. Submit Form
+
+```http
+POST /student/forms/:id/submissions
+```
+
+Creates:
+
+- `FormSubmission`
+- `FormAnswer`
+
+---
+
+## 🧾 Submission Lifecycle
+
+### Status Flow
+
+A submission moves through these states:
+
+```
+draft → submitted → under_review → graded
+             ↘
+           returned (optional)
+             ↘
+            draft (editable again)
+```
+
+---
+
+## 🧠 Grading System
+
+### Fields Used
+
+Stored in `FormSubmission`:
+
+- `grade` (e.g., A, B+, Pass)
+- `score` (numeric)
+- `feedback` (text)
+- `reviewedAt`
+- `reviewedById`
+- `status = graded`
+
+---
+
+### Grade Submission
+
+```http
+PATCH /admin/forms/submissions/:submissionId/grade
+```
+
+Behavior:
+
+- sets grade, score, feedback
+- automatically sets:
+
+```
+status = "graded"
+```
+
+---
+
+### Admin UI Behavior
+
+- Shows **Grade / Edit Grade button**
+- Displays:
+  - Grade
+  - Score
+  - Feedback
+
+---
+
+## 🔁 Return to Draft Feature
+
+### Purpose
+
+Allows admin to fix student mistakes when they submit incomplete forms.
+
+---
+
+### Endpoint
+
+```http
+PATCH /admin/forms/submissions/:submissionId/return-to-draft
+```
+
+---
+
+### Behavior
+
+- sets:
+
+```
+status = "draft"
+```
+
+- student can:
+  - edit form again
+  - resubmit later
+
+---
+
+### Admin UI
+
+- "Return" button shown if submission is not draft
+- optional feedback can be stored
+
+---
+
+## 👁 Student Review Mode
+
+When reopening:
+
+- if `status = draft`
+  - form is editable
+
+- if `status = submitted / graded`
+  - form is read-only
+
+---
+
+## ✨ UX Improvements
+
+### 1. Selectable Text
+
+- Wrapped with `SelectionArea`
+- Users can copy form content
+
+---
+
+### 2. Cleaner Form Builder
+
+- Empty defaults
+- Placeholder-based UX
+
+---
+
+### 3. Signature Handling
+
+- Stored in Cloudinary
+- Uses URL instead of raw data
+
+---
+
+### 4. Submission Management UI
+
+Admin now has:
+
+- View submissions
+- Grade submissions
+- Return submissions
+- See graded status instantly
+
+---
+
+## ⚠️ Common Issues
+
+### Submission not updating
+
+Fix:
+- ensure `_loadSubmission()` is called after actions
+
+---
+
+### Grade not showing
+
+Fix:
+- ensure API returns `grade`, `score`, `status`
+
+---
+
+### Student cannot edit after return
+
+Fix:
+- ensure status is actually `draft`
+
+---
+
+## 🎯 Summary
+
+The form system now supports:
+
+- Dynamic form rendering
+- Submission storage
+- Signature uploads
+- Admin grading system
+- Return-to-draft workflow
+- Status-based UI behavior
+
+This creates a full workflow similar to real LMS systems.
