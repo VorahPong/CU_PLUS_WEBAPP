@@ -97,6 +97,25 @@ class _AdminFormPreviewViewState extends State<AdminFormPreviewView> {
     }
   }
 
+  Future<void> _exportFormPdf() async {
+    try {
+      final api = FormsApi(context.read<ApiClient>());
+      await api.exportFormPdf(widget.formId);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Form PDF export started')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final title = (_form?['title'] ?? 'Form').toString();
@@ -127,6 +146,11 @@ class _AdminFormPreviewViewState extends State<AdminFormPreviewView> {
               ),
               Row(
                 children: [
+                  OutlinedButton(
+                    onPressed: _exportFormPdf,
+                    child: const Text('Print / Export PDF'),
+                  ),
+                  const SizedBox(width: 12),
                   OutlinedButton(
                     onPressed: () {
                       context.go(

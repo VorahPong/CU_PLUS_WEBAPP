@@ -2,7 +2,11 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/browser_client.dart';
+import 'package:http_parser/http_parser.dart';
 import '../config/api_config.dart';
+
+import 'download_file_stub.dart'
+    if (dart.library.html) 'download_file_web.dart';
 
 class ApiClient {
   ApiClient({http.Client? client}) : _client = client ?? _buildClient();
@@ -78,6 +82,82 @@ class ApiClient {
     );
 
     return _handleResponse(res);
+  }
+
+  Future<void> downloadFile(String path) async {
+    final request = http.Request(
+      'GET',
+      Uri.parse('${ApiConfig.baseUrl}$path'),
+    )..headers.addAll(_headers);
+
+    final streamed = await _client.send(request);
+    final bytes = await streamed.stream.toBytes();
+
+    if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
+      final body = bytes.isNotEmpty ? utf8.decode(bytes) : '';
+      dynamic decoded;
+
+      try {
+        decoded = body.isNotEmpty ? jsonDecode(body) : {};
+      } catch (_) {
+        decoded = null;
+      }
+
+      final msg = (decoded is Map && decoded['message'] != null)
+          ? decoded['message'].toString()
+          : 'Request failed (${streamed.statusCode})';
+
+      throw Exception(msg);
+    }
+
+    final contentDisposition =
+        streamed.headers['content-disposition'] ??
+        streamed.headers['Content-Disposition'];
+    final filename = _extractFilename(contentDisposition) ?? 'download.pdf';
+
+    final contentTypeHeader =
+        streamed.headers['content-type'] ??
+        streamed.headers['Content-Type'] ??
+        'application/octet-stream';
+    final mediaType = MediaType.parse(contentTypeHeader);
+
+    await saveDownloadedFile(
+      bytes,
+      filename: filename,
+      contentType: mediaType.toString(),
+    );
+  }
+
+  String? _extractFilename(String? contentDisposition) {
+    if (contentDisposition == null || contentDisposition.trim().isEmpty) {
+      return null;
+    }
+
+    final utf8Match = RegExp(
+      r"filename\*=UTF-8''([^;]+)",
+      caseSensitive: false,
+    ).firstMatch(contentDisposition);
+    if (utf8Match != null) {
+      return Uri.decodeComponent(utf8Match.group(1)!);
+    }
+
+    final quotedMatch = RegExp(
+      r'filename="([^"]+)"',
+      caseSensitive: false,
+    ).firstMatch(contentDisposition);
+    if (quotedMatch != null) {
+      return quotedMatch.group(1);
+    }
+
+    final plainMatch = RegExp(
+      r'filename=([^;]+)',
+      caseSensitive: false,
+    ).firstMatch(contentDisposition);
+    if (plainMatch != null) {
+      return plainMatch.group(1)?.trim();
+    }
+
+    return null;
   }
 
   Map<String, dynamic> _handleResponse(http.Response res) {

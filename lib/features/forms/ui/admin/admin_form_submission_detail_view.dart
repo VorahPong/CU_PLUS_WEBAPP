@@ -334,6 +334,28 @@ class _AdminFormSubmissionDetailViewState
     }
   }
 
+  Future<void> _exportSubmissionPdf() async {
+    final submissionId = (_submission?['id'] ?? '').toString();
+    if (submissionId.isEmpty) return;
+
+    try {
+      final api = FormsApi(context.read<ApiClient>());
+      await api.exportSubmissionPdf(submissionId);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Submission PDF export started')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final title = (_form?['title'] ?? 'Submission').toString();
@@ -377,6 +399,10 @@ class _AdminFormSubmissionDetailViewState
                       context.go('/dashboard/admin/forms/$formId/submissions');
                     },
                     child: const Text('Back to Submissions'),
+                  ),
+                  OutlinedButton(
+                    onPressed: _exportSubmissionPdf,
+                    child: const Text('Print / Export PDF'),
                   ),
                   if (!isDraft)
                     OutlinedButton(
