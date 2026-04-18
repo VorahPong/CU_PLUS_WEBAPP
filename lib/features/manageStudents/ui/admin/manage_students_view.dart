@@ -287,8 +287,10 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                         icon: Icons.visibility_outlined,
                         label: "View",
                         onTap: () {
+                          final studentId = _activeStudentId;
                           _hideActionOverlay();
-                          // TODO: view action
+                          if (studentId == null) return;
+                          context.go('/dashboard/admin/students/$studentId');
                         },
                       ),
                       _divider(),
@@ -296,8 +298,12 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                         icon: Icons.edit_outlined,
                         label: "Edit",
                         onTap: () {
+                          final studentId = _activeStudentId;
                           _hideActionOverlay();
-                          // TODO: edit action
+                          if (studentId == null) return;
+                          context.go(
+                            '/dashboard/admin/students/$studentId?mode=edit',
+                          );
                         },
                       ),
                       _divider(),
