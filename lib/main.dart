@@ -1,7 +1,11 @@
 import 'package:cu_plus_webapp/features/calender/ui/calendar_view.dart';
 import 'package:cu_plus_webapp/features/manageStudents/ui/admin/manage_students_view.dart';
 import 'package:cu_plus_webapp/features/announcements/ui/admin/announcements_view.dart';
+
 import 'package:cu_plus_webapp/features/manageStudents/ui/admin/register_student_view.dart';
+import 'package:cu_plus_webapp/features/manageStudents/ui/admin/student_detail_view.dart.dart';
+
+
 import 'package:cu_plus_webapp/features/forms/ui/admin/create_form_view.dart';
 
 import 'package:cu_plus_webapp/features/announcements/ui/student/announcements_view.dart';
@@ -254,6 +258,18 @@ class MyApp extends StatefulWidget {
             path: '/dashboard/setting',
             pageBuilder: (context, state) {
               return NoTransitionPage(key: state.pageKey, child: SettingView());
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/admin/students/:id',
+            builder: (context, state) {
+              final studentId = state.pathParameters['id']!;
+              final mode = state.uri.queryParameters['mode'];
+
+              return StudentDetailView(
+                studentId: studentId,
+                startInEditMode: mode == 'edit',
+              );
             },
           ),
         ],

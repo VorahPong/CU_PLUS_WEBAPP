@@ -27,8 +27,28 @@ class StudentApi {
     }
   }
 
-  Future<List<StudentRow>> getStudents() async {
-    final response = await _client.getJson('/admin/students');
+  Future<List<StudentRow>> getStudents({
+    String? search,
+    String? year,
+    bool? isActive,
+  }) async {
+    final queryParams = <String, String>{};
+
+    if (search != null && search.trim().isNotEmpty) {
+      queryParams['search'] = search.trim();
+    }
+
+    if (year != null && year.trim().isNotEmpty) {
+      queryParams['year'] = year.trim();
+    }
+
+    if (isActive != null) {
+      queryParams['isActive'] = isActive.toString();
+    }
+
+    final uri = Uri(path: '/admin/students', queryParameters: queryParams);
+
+    final response = await _client.getJson(uri.toString());
     final students = response['students'] as List<dynamic>? ?? [];
 
     return students
@@ -42,6 +62,30 @@ class StudentApi {
     if (response.isEmpty) {
       throw Exception("Failed to deactivate student");
     }
+  }
+
+  Future<StudentRow> getStudentById(String id) async {
+    final response = await _client.getJson('/admin/students/$id');
+    return StudentRow.fromJson(response['student'] as Map<String, dynamic>);
+  }
+
+  Future<StudentRow> updateStudent({
+    required String id,
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String schoolId,
+    String? nickname,
+  }) async {
+    final response = await _client.patchJson('/admin/students/$id', {
+      'firstName': firstName,
+      'lastName': lastName,
+      'email': email,
+      'schoolId': schoolId,
+      'name': nickname,
+    });
+
+    return StudentRow.fromJson(response['student'] as Map<String, dynamic>);
   }
 
   Future<void> reactivateStudent(String id) async {
@@ -58,41 +102,37 @@ class StudentApi {
 
 class StudentRow {
   final String id;
-  final String schoolId;
   final String firstName;
   final String lastName;
-  final String name;
   final String email;
+  final String schoolId;
   final String year;
-  final String role;
   final bool isActive;
+  final String? nickname;
 
-  const StudentRow({
+  StudentRow({
     required this.id,
-    required this.schoolId,
     required this.firstName,
     required this.lastName,
-    required this.name,
     required this.email,
+    required this.schoolId,
     required this.year,
-    required this.role,
     required this.isActive,
+    this.nickname,
   });
 
-  factory StudentRow.fromJson(Map<String, dynamic> json) {
-    final firstName = (json['firstName'] ?? '').toString();
-    final lastName = (json['lastName'] ?? '').toString();
+  String get name => '$firstName $lastName'.trim();
 
+  factory StudentRow.fromJson(Map<String, dynamic> json) {
     return StudentRow(
-      id: (json['id'] ?? '').toString(),
-      schoolId: (json['schoolId'] ?? '').toString(),
-      firstName: firstName,
-      lastName: lastName,
-      name: (json['name'] ?? '$firstName $lastName').toString(),
+      id: json['id'].toString(),
+      firstName: (json['firstName'] ?? '').toString(),
+      lastName: (json['lastName'] ?? '').toString(),
       email: (json['email'] ?? '').toString(),
+      schoolId: (json['schoolId'] ?? '').toString(),
       year: (json['year'] ?? '').toString(),
-      role: (json['role'] ?? '').toString(),
       isActive: json['isActive'] == true,
+      nickname: json['name']?.toString(),
     );
   }
 }

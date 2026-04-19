@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +17,8 @@ class ManageStudentsView extends StatefulWidget {
 
 class _ManageStudentsViewState extends State<ManageStudentsView> {
   late final StudentApi _studentApi;
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
 
   bool _loadingStudents = true;
   String? _studentsError;
@@ -27,7 +31,10 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
     });
 
     try {
-      final students = await _studentApi.getStudents();
+      final students = await _studentApi.getStudents(
+        search: _searchController.text.trim(),
+        year: _selectedYearFilter(),
+      );
 
       if (!mounted) return;
 
@@ -47,6 +54,51 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
         _loadingStudents = false;
       });
     }
+  }
+
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      _loadStudents();
+    });
+  }
+
+  String? _selectedYearFilter() {
+    if (_year1) return '1';
+    if (_year2) return '2';
+    if (_year3) return '3';
+    if (_year4) return '4';
+    return null;
+  }
+
+  void _selectYearFilter(String year, bool value) {
+    setState(() {
+      if (!value) {
+        _year1 = false;
+        _year2 = false;
+        _year3 = false;
+        _year4 = false;
+      } else {
+        _year1 = year == '1';
+        _year2 = year == '2';
+        _year3 = year == '3';
+        _year4 = year == '4';
+      }
+    });
+    _filterEntry?.markNeedsBuild();
+    _loadStudents();
+  }
+
+  void _clearYearFilter() {
+    setState(() {
+      _year1 = false;
+      _year2 = false;
+      _year3 = false;
+      _year4 = false;
+    });
+    _filterEntry?.markNeedsBuild();
+    _loadStudents();
   }
 
   @override
@@ -235,8 +287,10 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                         icon: Icons.visibility_outlined,
                         label: "View",
                         onTap: () {
+                          final studentId = _activeStudentId;
                           _hideActionOverlay();
-                          // TODO: view action
+                          if (studentId == null) return;
+                          context.go('/dashboard/admin/students/$studentId');
                         },
                       ),
                       _divider(),
@@ -244,8 +298,12 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                         icon: Icons.edit_outlined,
                         label: "Edit",
                         onTap: () {
+                          final studentId = _activeStudentId;
                           _hideActionOverlay();
-                          // TODO: edit action
+                          if (studentId == null) return;
+                          context.go(
+                            '/dashboard/admin/students/$studentId?mode=edit',
+                          );
                         },
                       ),
                       _divider(),
@@ -398,8 +456,7 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                             child: _yearToggle(
                               label: "1st Year",
                               value: _year1,
-                              onChanged: (val) =>
-                                  _setFilter(() => _year1 = val),
+                              onChanged: (val) => _selectYearFilter('1', val),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -407,8 +464,7 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                             child: _yearToggle(
                               label: "2nd Year",
                               value: _year2,
-                              onChanged: (val) =>
-                                  _setFilter(() => _year2 = val),
+                              onChanged: (val) => _selectYearFilter('2', val),
                             ),
                           ),
                         ],
@@ -426,8 +482,7 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                             child: _yearToggle(
                               label: "3rd Year",
                               value: _year3,
-                              onChanged: (val) =>
-                                  _setFilter(() => _year3 = val),
+                              onChanged: (val) => _selectYearFilter('3', val),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -435,8 +490,7 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                             child: _yearToggle(
                               label: "4th Year",
                               value: _year4,
-                              onChanged: (val) =>
-                                  _setFilter(() => _year4 = val),
+                              onChanged: (val) => _selectYearFilter('4', val),
                             ),
                           ),
                         ],
@@ -461,6 +515,8 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
     _hideFilterOverlay();
     _hideActionOverlay();
     super.dispose();
@@ -558,6 +614,8 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                               SizedBox(
                                 width: MediaQuery.of(context).size.width * 0.3,
                                 child: TextField(
+                                  controller: _searchController,
+                                  onChanged: _onSearchChanged,
                                   decoration: InputDecoration(
                                     hintText: "Search by name, email, or ID",
                                     prefixIcon: const Icon(Icons.search),
@@ -582,14 +640,13 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
 
                               const SizedBox(width: 26),
 
-                              // Filter button + dropdown
+                              // Filter button + clear action
                               CompositedTransformTarget(
                                 link: _filterLink,
                                 child: OutlinedButton(
                                   onPressed: _toggleFilterOverlay,
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor:
-                                        Colors.black87, // ✅ make text visible
+                                    foregroundColor: Colors.black87,
                                     side: BorderSide(
                                       color: Colors.grey.shade300,
                                     ),
@@ -601,13 +658,22 @@ class _ManageStudentsViewState extends State<ManageStudentsView> {
                                       vertical: 14,
                                     ),
                                   ),
-                                  child: const Text(
-                                    "Filter",
-                                    style: TextStyle(
+                                  child: Text(
+                                    _selectedYearFilter() == null
+                                        ? "Filter"
+                                        : "Filter: ${_formatYear(_selectedYearFilter()!)}",
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
+                              ),
+                              const SizedBox(width: 8),
+                              TextButton(
+                                onPressed: _selectedYearFilter() == null
+                                    ? null
+                                    : _clearYearFilter,
+                                child: const Text('Clear Filter'),
                               ),
                             ],
                           ),
