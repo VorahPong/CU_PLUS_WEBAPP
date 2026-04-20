@@ -1024,6 +1024,9 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
                 yearControllers: _yearControllers,
                 signaturePadKeys: _signaturePadKeys,
                 signatureValues: _signatureValues,
+                grade: _submission?['grade']?.toString(),
+                score: _submission?['score'] as num?,
+                feedback: _submission?['feedback']?.toString(),
                 onCheckboxChanged: (fieldId, option, checked) {
                   setState(() {
                     final set = _checkboxValues[fieldId] ?? <String>{};

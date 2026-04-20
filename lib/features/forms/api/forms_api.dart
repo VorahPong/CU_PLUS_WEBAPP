@@ -52,6 +52,14 @@ class FormsApi {
     return Map<String, dynamic>.from(res['submission']);
   }
 
+  Future<void> exportFormPdf(String formId) async {
+    await _client.downloadFile('/forms/$formId/export-pdf');
+  }
+
+  Future<void> exportSubmissionPdf(String submissionId) async {
+    await _client.downloadFile('/forms/submissions/$submissionId/export-pdf');
+  }
+
   Future<void> deleteAdminForm(String formId) async {
   await _client.deleteJson('/admin/forms/$formId');
 }

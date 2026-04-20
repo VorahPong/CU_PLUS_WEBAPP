@@ -339,34 +339,28 @@ class _SettingViewState extends State<SettingView> {
                                 Expanded(
                                   child: TextFormField(
                                     controller: _firstNameController,
-                                    decoration: const InputDecoration(
+                                    readOnly: true,
+                                    enabled: false,
+                                    decoration: InputDecoration(
                                       labelText: 'First Name',
-                                      border: OutlineInputBorder(),
+                                      border: const OutlineInputBorder(),
+                                      filled: true,
+                                      fillColor: Colors.grey.shade100,
                                     ),
-                                    validator: (value) {
-                                      if (value == null ||
-                                          value.trim().isEmpty) {
-                                        return 'First name is required';
-                                      }
-                                      return null;
-                                    },
                                   ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: TextFormField(
                                     controller: _lastNameController,
-                                    decoration: const InputDecoration(
+                                    readOnly: true,
+                                    enabled: false,
+                                    decoration: InputDecoration(
                                       labelText: 'Last Name',
-                                      border: OutlineInputBorder(),
+                                      border: const OutlineInputBorder(),
+                                      filled: true,
+                                      fillColor: Colors.grey.shade100,
                                     ),
-                                    validator: (value) {
-                                      if (value == null ||
-                                          value.trim().isEmpty) {
-                                        return 'Last name is required';
-                                      }
-                                      return null;
-                                    },
                                   ),
                                 ),
                               ],

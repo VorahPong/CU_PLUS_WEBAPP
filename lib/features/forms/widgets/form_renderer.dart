@@ -18,6 +18,9 @@ class FormRenderer extends StatelessWidget {
     this.onDateTap,
     this.onSignatureDrawEnd,
     this.onSignatureClear,
+    this.grade,
+    this.score,
+    this.feedback,
   });
 
   final List<dynamic> fields;
@@ -35,6 +38,84 @@ class FormRenderer extends StatelessWidget {
   final void Function(String fieldId)? onDateTap;
   final VoidCallback Function(String fieldId)? onSignatureDrawEnd;
   final VoidCallback Function(String fieldId)? onSignatureClear;
+  final String? grade;
+  final num? score;
+  final String? feedback;
+  bool _hasGradingInfo() {
+    final safeGrade = (grade ?? '').trim();
+    final safeFeedback = (feedback ?? '').trim();
+    return safeGrade.isNotEmpty || score != null || safeFeedback.isNotEmpty;
+  }
+
+  Widget _buildGradingSummary(BuildContext context) {
+    final safeGrade = (grade ?? '').trim();
+    final safeFeedback = (feedback ?? '').trim();
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Grading Summary',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (safeGrade.isNotEmpty)
+            Text(
+              'Grade: $safeGrade',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+          if (score != null) ...[
+            if (safeGrade.isNotEmpty) const SizedBox(height: 6),
+            Text(
+              'Score: $score',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+          ],
+          if (safeFeedback.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Text(
+              'Feedback',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 6),
+            SelectableText(
+              safeFeedback,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.5,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
   String _datePlaceholder(Map<String, dynamic> field) {
     final config = field['configJson'];
@@ -176,13 +257,16 @@ class FormRenderer extends StatelessWidget {
             )
           : Theme.of(context),
       child: Column(
-        children: fields.map((rawField) {
-          final field = Map<String, dynamic>.from(rawField as Map);
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 20),
-            child: _buildField(field),
-          );
-        }).toList(),
+        children: [
+          if (readOnly && _hasGradingInfo()) _buildGradingSummary(context),
+          ...fields.map((rawField) {
+            final field = Map<String, dynamic>.from(rawField as Map);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: _buildField(field),
+            );
+          }).toList(),
+        ],
       ),
     );
   }
