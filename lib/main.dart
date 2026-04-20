@@ -5,7 +5,6 @@ import 'package:cu_plus_webapp/features/announcements/ui/admin/announcements_vie
 import 'package:cu_plus_webapp/features/manageStudents/ui/admin/register_student_view.dart';
 import 'package:cu_plus_webapp/features/manageStudents/ui/admin/student_detail_view.dart.dart';
 
-
 import 'package:cu_plus_webapp/features/forms/ui/admin/create_form_view.dart';
 
 import 'package:cu_plus_webapp/features/announcements/ui/student/announcements_view.dart';
@@ -21,7 +20,6 @@ import 'package:cu_plus_webapp/features/forms/ui/admin/admin_form_submissions_vi
 import 'package:cu_plus_webapp/features/forms/ui/admin/admin_form_submission_detail_view.dart';
 import 'package:cu_plus_webapp/features/support/ui/support_view.dart';
 import 'package:cu_plus_webapp/features/setting/ui/setting_view.dart';
-
 
 import 'package:flutter/material.dart';
 import 'features/auth/ui/first_page.dart';
@@ -282,9 +280,12 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  GoRouter? _router;
+
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthController>().loadSession();
     });
@@ -293,13 +294,23 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
-    final router = MyApp._createRouter(auth);
+
+    _router ??= MyApp._createRouter(auth);
+
+    if (auth.isLoading) {
+      return const MaterialApp(
+        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      );
+    }
 
     return MaterialApp.router(
-      routerConfig: router,
+      routerConfig: _router!,
+
       debugShowCheckedModeBanner: false,
+
       theme: ThemeData(
         fontFamily: 'DMSans',
+
         scaffoldBackgroundColor: Colors.white,
       ),
     );
