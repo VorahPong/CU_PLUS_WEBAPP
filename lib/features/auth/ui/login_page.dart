@@ -161,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                "School Email",
+                                "School Email (test)",
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Color(0xFF111928),
