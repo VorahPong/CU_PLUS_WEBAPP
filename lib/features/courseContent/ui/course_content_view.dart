@@ -857,21 +857,26 @@ class _CourseContentViewState extends State<CourseContentView> {
       ),
       child: Column(
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isCompact = constraints.maxWidth < 520;
+
+              final titleWidget = Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Row(
-                mainAxisSize: MainAxisSize.min,
+              );
+
+              final actions = Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 4,
+                runSpacing: 4,
                 children: [
                   if (canEdit)
                     IconButton(
@@ -933,8 +938,55 @@ class _CourseContentViewState extends State<CourseContentView> {
                       },
                     ),
                 ],
-              ),
-            ],
+              );
+
+              if (isCompact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: titleWidget),
+                        IconButton(
+                          icon: Icon(
+                            isExpanded
+                                ? Icons.keyboard_arrow_up
+                                : Icons.keyboard_arrow_down,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              if (isExpanded) {
+                                _expandedFolderIds.remove(folderId);
+                              } else {
+                                _expandedFolderIds.add(folderId);
+                              }
+                            });
+
+                            _saveExpandedFolderIdsToStorage();
+                          },
+                        ),
+                      ],
+                    ),
+                    if (canEdit) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: actions,
+                      ),
+                    ],
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: titleWidget),
+                  const SizedBox(width: 12),
+                  actions,
+                ],
+              );
+            },
           ),
           if (isExpanded && items.isNotEmpty) ...[
             const SizedBox(height: 8),
