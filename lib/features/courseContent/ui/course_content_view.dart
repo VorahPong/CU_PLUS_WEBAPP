@@ -1053,6 +1053,7 @@ class _CourseContentViewState extends State<CourseContentView> {
                               const SizedBox(width: 12),
                               Switch(
                                 value: isEditMode,
+                                activeThumbColor: Color(0xFFFFD971),
                                 onChanged: (value) {
                                   setState(() {
                                     isEditMode = value;
@@ -1091,7 +1092,7 @@ class _CourseContentViewState extends State<CourseContentView> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 18,
-                              vertical: 18,
+                              vertical: 10,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white,
