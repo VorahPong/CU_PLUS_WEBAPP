@@ -7,6 +7,8 @@ import 'package:cu_plus_webapp/features/forms/api/forms_api.dart';
 import 'package:cu_plus_webapp/core/extensions/auth_extension.dart';
 import 'package:web/web.dart' as web;
 import 'package:cu_plus_webapp/features/courseContent/widget/action_choice_dialog.dart';
+import 'package:cu_plus_webapp/features/shared/widgets/page_section_header.dart';
+
 
 class CourseContentView extends StatefulWidget {
   const CourseContentView({super.key, required this.email});
@@ -1130,18 +1132,9 @@ class _CourseContentViewState extends State<CourseContentView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(left: 16.0),
-                    child: Text(
-                      'Course Content',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
+                  PageSectionHeader(title: 'Course Content'),
+                  
                   const SizedBox(height: 12),
-                  Divider(color: Colors.grey.shade300, thickness: 1),
                   const SizedBox(height: 20),
                   if (isAdmin) ...[
                     Row(
