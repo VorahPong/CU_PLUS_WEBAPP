@@ -818,6 +818,8 @@ class _CourseContentViewState extends State<CourseContentView> {
     final isAdmin = context.auth.isAdmin;
     final canEdit = isAdmin && isEditMode;
     final isSubmitted = form['isSubmitted'] == true;
+    final isLocked = !isAdmin && form['isLocked'] == true;
+    final lockedReason = (form['lockedReason'] ?? 'This form is locked for your year.').toString();
 
     return Container(
       key: key,
@@ -826,6 +828,14 @@ class _CourseContentViewState extends State<CourseContentView> {
         borderRadius: BorderRadius.circular(12),
         onTap: () {
           if (formId == null) return;
+
+          if (isLocked) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(lockedReason)),
+            );
+            return;
+          }
+
           if (isAdmin) {
             context.go('/dashboard/admin/forms/$formId/preview');
           } else {
@@ -835,16 +845,18 @@ class _CourseContentViewState extends State<CourseContentView> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isLocked ? Colors.grey.shade100 : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.grey.shade300),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-            ],
+            boxShadow: isLocked
+                ? []
+                : const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -852,17 +864,23 @@ class _CourseContentViewState extends State<CourseContentView> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 2),
-                    child: Icon(Icons.description_outlined),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Icon(
+                      isLocked ? Icons.lock_outline : Icons.description_outlined,
+                      color: isLocked ? Colors.grey.shade500 : Colors.black87,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       (form['title'] ?? 'Untitled Form').toString(),
-                      style: const TextStyle(
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
+                        color: isLocked ? Colors.grey.shade600 : Colors.black,
                       ),
                     ),
                   ),
@@ -870,9 +888,13 @@ class _CourseContentViewState extends State<CourseContentView> {
                     Padding(
                       padding: const EdgeInsets.only(right: 8, top: 2),
                       child: Icon(
-                        Icons.check_circle,
+                        isLocked ? Icons.lock : Icons.check_circle,
                         size: 20,
-                        color: isSubmitted ? Colors.green : Colors.grey,
+                        color: isLocked
+                            ? Colors.grey.shade500
+                            : isSubmitted
+                                ? Colors.green
+                                : Colors.grey,
                       ),
                     ),
                   if (canEdit)
@@ -918,7 +940,12 @@ class _CourseContentViewState extends State<CourseContentView> {
               const SizedBox(height: 8),
               Text(
                 'Due: ${_formatDueDate(form['dueDate'])}',
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isLocked ? Colors.grey.shade500 : Colors.grey.shade700,
+                ),
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -926,6 +953,12 @@ class _CourseContentViewState extends State<CourseContentView> {
                 runSpacing: 8,
                 children: [
                   _InfoChip(label: 'Year: ${_formatYear(form['year'])}'),
+                  if (isLocked)
+                    _InfoChip(
+                      label: 'Locked',
+                      icon: Icons.lock_outline,
+                      isMuted: true,
+                    ),
                   if (isAdmin)
                     _InfoChip(
                       label: 'Submissions: $submissionCount',
@@ -939,6 +972,32 @@ class _CourseContentViewState extends State<CourseContentView> {
                     ),
                 ],
               ),
+              if (isLocked) ...[
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: Colors.grey.shade600,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        lockedReason,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -1279,24 +1338,52 @@ class _CourseContentViewState extends State<CourseContentView> {
   }
 }
 
+
 class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.label, this.onPressed});
+  const _InfoChip({
+    required this.label,
+    this.onPressed,
+    this.icon,
+    this.isMuted = false,
+  });
 
   final String label;
   final VoidCallback? onPressed;
+  final IconData? icon;
+  final bool isMuted;
 
   @override
   Widget build(BuildContext context) {
+    final foregroundColor = isMuted ? Colors.grey.shade600 : Colors.black87;
+    final backgroundColor = isMuted ? Colors.grey.shade200 : Colors.white;
+
     final child = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      child: Text(
-        label,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 14, color: foregroundColor),
+            const SizedBox(width: 5),
+          ],
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: foregroundColor,
+              ),
+            ),
+          ),
+        ],
       ),
     );
 
