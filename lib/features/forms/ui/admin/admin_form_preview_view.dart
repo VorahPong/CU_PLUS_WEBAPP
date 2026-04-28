@@ -6,6 +6,7 @@ import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
 import 'package:cu_plus_webapp/core/network/api_client.dart';
 import 'package:cu_plus_webapp/features/forms/api/forms_api.dart';
 import 'package:cu_plus_webapp/features/forms/widgets/form_renderer.dart';
+import 'package:cu_plus_webapp/features/shared/widgets/page_section_header.dart';
 
 class AdminFormPreviewView extends StatefulWidget {
   const AdminFormPreviewView({super.key, required this.formId});
@@ -116,13 +117,25 @@ class _AdminFormPreviewViewState extends State<AdminFormPreviewView> {
     }
   }
 
+  ButtonStyle _previewActionButtonStyle() {
+    return OutlinedButton.styleFrom(
+      foregroundColor: Colors.black,
+      side: BorderSide(color: Colors.grey.shade300),
+      backgroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final title = (_form?['title'] ?? 'Form').toString();
     final instructions = (_form?['instructions'] ?? '').toString();
 
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(color: Colors.black));
     }
 
     if (_error != null) {
@@ -130,57 +143,80 @@ class _AdminFormPreviewViewState extends State<AdminFormPreviewView> {
     }
 
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 14 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Preview Form',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Row(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 760;
+
+              final actionButtons = Wrap(
+                alignment: isNarrow ? WrapAlignment.start : WrapAlignment.end,
+                spacing: 10,
+                runSpacing: 10,
                 children: [
-                  OutlinedButton(
+                  OutlinedButton.icon(
                     onPressed: _exportFormPdf,
-                    child: const Text('Print / Export PDF'),
+                    style: _previewActionButtonStyle(),
+                    icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                    label: const Text('Print / Export PDF'),
                   ),
-                  const SizedBox(width: 12),
-                  OutlinedButton(
+                  OutlinedButton.icon(
                     onPressed: () {
                       context.go(
                         '/dashboard/admin/forms/${widget.formId}/submissions',
                       );
                     },
-                    child: const Text('View Submissions'),
+                    style: _previewActionButtonStyle(),
+                    icon: const Icon(Icons.inbox_outlined, size: 18),
+                    label: const Text('View Submissions'),
                   ),
-                  const SizedBox(width: 12),
-                  OutlinedButton(
+                  OutlinedButton.icon(
                     onPressed: () {
                       context.go(
                         '/dashboard/admin/forms/${widget.formId}/edit',
                       );
                     },
-                    child: const Text('Edit Form'),
+                    style: _previewActionButtonStyle(),
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: const Text('Edit Form'),
                   ),
-                  const SizedBox(width: 12),
-                  OutlinedButton(
+                  OutlinedButton.icon(
                     onPressed: () {
                       context.go('/dashboard');
                     },
-                    child: const Text('Back'),
+                    style: _previewActionButtonStyle(),
+                    icon: const Icon(Icons.arrow_back, size: 18),
+                    label: const Text('Back'),
                   ),
                 ],
-              ),
-            ],
+              );
+
+              if (isNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const PageSectionHeader(title: 'Preview Form'),
+                    const SizedBox(height: 12),
+                    actionButtons,
+                  ],
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const PageSectionHeader(title: 'Preview Form'),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: actionButtons,
+                  ),
+                ],
+              );
+            },
           ),
-          const SizedBox(height: 12),
-          Divider(color: Colors.grey.shade300, thickness: 1),
           const SizedBox(height: 20),
 
           Expanded(
@@ -188,6 +224,8 @@ class _AdminFormPreviewViewState extends State<AdminFormPreviewView> {
               children: [
                 Text(
                   title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w600,
@@ -197,6 +235,7 @@ class _AdminFormPreviewViewState extends State<AdminFormPreviewView> {
                   const SizedBox(height: 10),
                   Text(
                     instructions,
+                    overflow: TextOverflow.visible,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey.shade700,
@@ -224,3 +263,4 @@ class _AdminFormPreviewViewState extends State<AdminFormPreviewView> {
     );
   }
 }
+

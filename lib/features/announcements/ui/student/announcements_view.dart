@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:cu_plus_webapp/core/network/api_client.dart';
 import 'package:cu_plus_webapp/features/announcements/api/announcement_api.dart';
 import 'package:cu_plus_webapp/features/announcements/widgets/announcement_feed.dart';
+import 'package:cu_plus_webapp/features/shared/widgets/page_section_header.dart';
+
 class StudentAnnouncementsView extends StatefulWidget {
   const StudentAnnouncementsView({
     super.key,
@@ -60,15 +62,12 @@ class _StudentAnnouncementsViewState extends State<StudentAnnouncementsView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 16.0),
-            child: Text(
-              "Announcements",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
-            ),
-          ),
+          // const Padding(
+          //   padding: EdgeInsets.only(left: 16.0),
+          //   child: PageSectionHeader(title: 'Announcement'),
+          // ),
+          PageSectionHeader(title: 'Announcement'),
           const SizedBox(height: 12),
-          Divider(color: Colors.grey.shade300, thickness: 1),
           const SizedBox(height: 20),
           Expanded(
             child: AnnouncementFeed(

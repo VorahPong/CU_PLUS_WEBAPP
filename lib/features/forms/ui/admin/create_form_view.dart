@@ -178,9 +178,7 @@ class _CreateFormViewState extends State<CreateFormView> {
             : type == "date"
             ? {"datePlaceholder": "MM/DD/YYYY"}
             : type == "year"
-            ? {
-                "yearPlaceholder": "YYYY",
-              }
+            ? {"yearPlaceholder": "YYYY"}
             : null,
       });
     });
@@ -318,6 +316,89 @@ class _CreateFormViewState extends State<CreateFormView> {
       initialDate: _dueDate ?? DateTime.now(),
       firstDate: DateTime(2024),
       lastDate: DateTime(2100),
+      builder: (dialogContext, child) {
+        return Theme(
+          data: Theme.of(dialogContext).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Colors.black,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+            dialogTheme: DialogThemeData(
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            datePickerTheme: DatePickerThemeData(
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.white,
+              headerBackgroundColor: Colors.white,
+              headerForegroundColor: Colors.black,
+              dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return Colors.white;
+                }
+                if (states.contains(WidgetState.disabled)) {
+                  return Colors.grey;
+                }
+                return Colors.black;
+              }),
+              dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return Colors.black;
+                }
+                return Colors.transparent;
+              }),
+              todayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return Colors.white;
+                }
+                return Colors.black;
+              }),
+              todayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return Colors.black;
+                }
+                return Colors.transparent;
+              }),
+              todayBorder: const BorderSide(color: Colors.black),
+              yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return Colors.white;
+                }
+                if (states.contains(WidgetState.disabled)) {
+                  return Colors.grey;
+                }
+                return Colors.black;
+              }),
+              yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return Colors.black;
+                }
+                return Colors.transparent;
+              }),
+              confirmButtonStyle: TextButton.styleFrom(
+                foregroundColor: Colors.black,
+              ),
+              cancelButtonStyle: TextButton.styleFrom(
+                foregroundColor: Colors.black,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.black,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (picked != null) {
@@ -376,357 +457,473 @@ class _CreateFormViewState extends State<CreateFormView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: const EdgeInsets.all(22),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _isEditMode ? 'Edit Form' : 'Customizing',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(6),
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: Padding(
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _isEditMode ? 'Edit Form' : 'Customizing',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w500,
                   ),
-                  child: _loadingForm
-                      ? const Center(child: CircularProgressIndicator())
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            TextFormField(
-                              controller: _titleCtrl,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                isDense: true,
-                                hintText: "Enter form title",
-                              ),
-                              validator: (v) => (v == null || v.trim().isEmpty)
-                                  ? "Title is required"
-                                  : null,
-                            ),
+                ),
+                const SizedBox(height: 18),
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(
+                      MediaQuery.of(context).size.width < 600 ? 14 : 20,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: _loadingForm
+                        ? const Center(child: CircularProgressIndicator())
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isSmallScreen = constraints.maxWidth < 760;
+                              final horizontalGap = isSmallScreen ? 0.0 : 28.0;
 
-                            const SizedBox(height: 4),
-                            Text(
-                              "Due: ${_formattedDueDate()}",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-
-                            const SizedBox(height: 14),
-                            Divider(color: Colors.grey.shade300, height: 1),
-                            const SizedBox(height: 20),
-
-                            Expanded(
-                              child: Row(
+                              return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  TextFormField(
+                                    controller: _titleCtrl,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      isDense: true,
+                                      hintText: "Enter form title",
+                                    ),
+                                    validator: (v) =>
+                                        (v == null || v.trim().isEmpty)
+                                        ? "Title is required"
+                                        : null,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "Due: ${_formattedDueDate()}",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  Divider(
+                                    color: Colors.grey.shade300,
+                                    height: 1,
+                                  ),
+                                  const SizedBox(height: 20),
                                   Expanded(
-                                    child: SingleChildScrollView(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          _topMetaSection(),
-                                          const SizedBox(height: 20),
-                                          _builderCanvas(),
-                                        ],
-                                      ),
+                                    child: isSmallScreen
+                                        ? SingleChildScrollView(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                _topMetaSection(),
+                                                const SizedBox(height: 20),
+                                                _addInputPanel(isCompact: true),
+                                                const SizedBox(height: 20),
+                                                _builderCanvas(),
+                                              ],
+                                            ),
+                                          )
+                                        : Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Expanded(
+                                                child: SingleChildScrollView(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      _topMetaSection(),
+                                                      const SizedBox(
+                                                        height: 20,
+                                                      ),
+                                                      _builderCanvas(),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width: horizontalGap),
+                                              _addInputPanel(),
+                                            ],
+                                          ),
+                                  ),
+                                  if (_error != null) ...[
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      _error!,
+                                      style: const TextStyle(color: Colors.red),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 16),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Wrap(
+                                      alignment: WrapAlignment.end,
+                                      spacing: 12,
+                                      runSpacing: 10,
+                                      children: [
+                                        OutlinedButton(
+                                          onPressed: _loading
+                                              ? null
+                                              : () {
+                                                  if (_isEditMode) {
+                                                    context.go(
+                                                      '/dashboard/admin/forms',
+                                                    );
+                                                  } else {
+                                                    context.pop();
+                                                  }
+                                                },
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: Colors.black87,
+                                            side: BorderSide(
+                                              color: Colors.grey.shade300,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                          ),
+                                          child: const Text("Cancel"),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: _loading
+                                              ? null
+                                              : _saveForm,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.black,
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            _loading
+                                                ? (_isEditMode
+                                                      ? 'Updating...'
+                                                      : 'Saving...')
+                                                : (_isEditMode
+                                                      ? 'Update'
+                                                      : 'Save'),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-
-                                  const SizedBox(width: 28),
-
-                                  _addInputPanel(),
                                 ],
-                              ),
-                            ),
-
-                            if (_error != null) ...[
-                              const SizedBox(height: 12),
-                              Text(
-                                _error!,
-                                style: const TextStyle(color: Colors.red),
-                              ),
-                            ],
-
-                            const SizedBox(height: 16),
-
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                OutlinedButton(
-                                  onPressed: _loading
-                                      ? null
-                                      : () {
-                                          if (_isEditMode) {
-                                            context.go(
-                                              '/dashboard/admin/forms',
-                                            );
-                                          } else {
-                                            context.pop();
-                                          }
-                                        },
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.black87,
-                                    side: BorderSide(
-                                      color: Colors.grey.shade300,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                  ),
-                                  child: const Text("Cancel"),
-                                ),
-                                const SizedBox(width: 12),
-                                ElevatedButton(
-                                  onPressed: _loading ? null : _saveForm,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.black,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    _loading
-                                        ? (_isEditMode
-                                              ? 'Updating...'
-                                              : 'Saving...')
-                                        : (_isEditMode ? 'Update' : 'Save'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                              );
+                            },
+                          ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _topMetaSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _periodDropdownItem({
+    required String value,
+    required IconData icon,
+    required String description,
+    bool compact = false,
+  }) {
+    if (compact) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFFB77900)),
+          const SizedBox(width: 8),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+        ],
+      );
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
-          "Name",
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF4CC),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: const Color(0xFFB77900), size: 16),
         ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _titleCtrl,
-          decoration: _inputDecoration(),
-          validator: (v) =>
-              (v == null || v.trim().isEmpty) ? "Title is required" : null,
-        ),
-        const SizedBox(height: 16),
-
-        const Text(
-          "Due Date",
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 160,
-              child: TextFormField(
-                readOnly: true,
-                onTap: _hasDueDate ? _pickDueDate : null,
-                decoration: _inputDecoration(
-                  hintText: _hasDueDate
-                      ? (_dueDate == null ? "mm/dd/yyyy" : _formattedDueDate())
-                      : "No due date",
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 120,
-              child: DropdownButtonFormField<int>(
-                value: _selectedHour,
-                decoration: _inputDecoration(),
-                items: List.generate(12, (index) {
-                  final hour = index + 1;
-                  return DropdownMenuItem(
-                    value: hour,
-                    child: Text(hour.toString().padLeft(2, '0')),
-                  );
-                }),
-                onChanged: _hasDueDate
-                    ? (value) {
-                        if (value == null) return;
-                        _selectedHour = value;
-                        _syncDueDateTime();
-                      }
-                    : null,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Padding(
-              padding: const EdgeInsets.only(top: 14),
-              child: Text(
-                ':',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey.shade700,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 120,
-              child: DropdownButtonFormField<int>(
-                value: _selectedMinute,
-                decoration: _inputDecoration(),
-                items: List.generate(60, (index) {
-                  return DropdownMenuItem(
-                    value: index,
-                    child: Text(index.toString().padLeft(2, '0')),
-                  );
-                }),
-                onChanged: _hasDueDate
-                    ? (value) {
-                        if (value == null) return;
-                        _selectedMinute = value;
-                        _syncDueDateTime();
-                      }
-                    : null,
-              ),
-            ),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 110,
-              child: DropdownButtonFormField<String>(
-                value: _selectedPeriod,
-                decoration: _inputDecoration(),
-                items: const [
-                  DropdownMenuItem(value: 'AM', child: Text('AM')),
-                  DropdownMenuItem(value: 'PM', child: Text('PM')),
-                ],
-                onChanged: _hasDueDate
-                    ? (value) {
-                        if (value == null) return;
-                        _selectedPeriod = value;
-                        _syncDueDateTime();
-                      }
-                    : null,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: CheckboxListTile(
-                  value: !_hasDueDate,
-                  onChanged: (value) {
-                    final noDate = value == true;
-                    setState(() {
-                      _hasDueDate = !noDate;
-                      if (_hasDueDate) {
-                        final base = _dueDate ?? DateTime.now();
-                        final hour24 = _selectedPeriod == 'AM'
-                            ? (_selectedHour == 12 ? 0 : _selectedHour)
-                            : (_selectedHour == 12 ? 12 : _selectedHour + 12);
-                        _dueDate = DateTime(
-                          base.year,
-                          base.month,
-                          base.day,
-                          hour24,
-                          _selectedMinute,
-                        );
-                      } else {
-                        _dueDate = null;
-                      }
-                    });
-                  },
-                  title: const Text(
-                    'No set date',
-                    style: TextStyle(fontSize: 13),
-                  ),
-                  dense: true,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const Text(
-          "Audience",
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String?>(
-          value: _year,
-          decoration: _inputDecoration(),
-          items: const [
-            DropdownMenuItem<String?>(value: null, child: Text("All Years")),
-            DropdownMenuItem<String?>(value: "1", child: Text("1st Year")),
-            DropdownMenuItem<String?>(value: "2", child: Text("2nd Year")),
-            DropdownMenuItem<String?>(value: "3", child: Text("3rd Year")),
-            DropdownMenuItem<String?>(value: "4", child: Text("4th Year")),
-          ],
-          onChanged: (value) {
-            setState(() {
-              _year = value;
-            });
-          },
-        ),
-        const SizedBox(height: 16),
-        const SizedBox(height: 8),
-        Text(
-          _hasDueDate
-              ? 'Selected time: ${_formattedTime()} $_selectedPeriod'
-              : 'No due date set',
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-        ),
-
-        const SizedBox(height: 16),
-
-        const Text(
-          "Assignment Details",
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _instructionsCtrl,
-          maxLines: 6,
-          decoration: _inputDecoration(hintText: "Enter assignment instructions..."),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _topMetaSection() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 700;
+        final dateFieldWidth = isNarrow ? constraints.maxWidth : 160.0;
+        final timeFieldWidth = isNarrow ? 95.0 : 120.0;
+        final periodFieldWidth = isNarrow ? 112.0 : 120.0;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Name",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _titleCtrl,
+              decoration: _inputDecoration(),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? "Title is required" : null,
+            ),
+            const SizedBox(height: 16),
+
+            const Text(
+              "Due Date",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.start,
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                SizedBox(
+                  width: dateFieldWidth,
+                  child: TextFormField(
+                    readOnly: true,
+                    onTap: _hasDueDate ? _pickDueDate : null,
+                    decoration: _inputDecoration(
+                      hintText: _hasDueDate
+                          ? (_dueDate == null
+                                ? "mm/dd/yyyy"
+                                : _formattedDueDate())
+                          : "No due date",
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: timeFieldWidth,
+                  child: DropdownButtonFormField<int>(
+                    value: _selectedHour,
+                    decoration: _inputDecoration(),
+                    items: List.generate(12, (index) {
+                      final hour = index + 1;
+                      return DropdownMenuItem(
+                        value: hour,
+                        child: Text(hour.toString().padLeft(2, '0')),
+                      );
+                    }),
+                    onChanged: _hasDueDate
+                        ? (value) {
+                            if (value == null) return;
+                            _selectedHour = value;
+                            _syncDueDateTime();
+                          }
+                        : null,
+                  ),
+                ),
+                SizedBox(
+                  width: timeFieldWidth,
+                  child: DropdownButtonFormField<int>(
+                    value: _selectedMinute,
+                    decoration: _inputDecoration(),
+                    items: List.generate(60, (index) {
+                      return DropdownMenuItem(
+                        value: index,
+                        child: Text(index.toString().padLeft(2, '0')),
+                      );
+                    }),
+                    onChanged: _hasDueDate
+                        ? (value) {
+                            if (value == null) return;
+                            _selectedMinute = value;
+                            _syncDueDateTime();
+                          }
+                        : null,
+                  ),
+                ),
+                SizedBox(
+                  width: periodFieldWidth,
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedPeriod,
+                    decoration: _inputDecoration(),
+                    dropdownColor: Colors.white,
+                    isExpanded: true,
+                    itemHeight: 50,
+                    selectedItemBuilder: (context) => [
+                      _periodDropdownItem(
+                        value: 'AM',
+                        icon: Icons.wb_sunny_outlined,
+                        description: 'Morning',
+                        compact: true,
+                      ),
+                      _periodDropdownItem(
+                        value: 'PM',
+                        icon: Icons.nights_stay_outlined,
+                        description: 'Afternoon / Evening',
+                        compact: true,
+                      ),
+                    ],
+                    items: [
+                      DropdownMenuItem(
+                        value: 'AM',
+                        child: _periodDropdownItem(
+                          value: 'AM',
+                          icon: Icons.wb_sunny_outlined,
+                          description: 'Morning',
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'PM',
+                        child: _periodDropdownItem(
+                          value: 'PM',
+                          icon: Icons.nights_stay_outlined,
+                          description: 'Afternoon / Evening',
+                        ),
+                      ),
+                    ],
+                    onChanged: _hasDueDate
+                        ? (value) {
+                            if (value == null) return;
+                            _selectedPeriod = value;
+                            _syncDueDateTime();
+                          }
+                        : null,
+                  ),
+                ),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: isNarrow ? constraints.maxWidth : 180,
+                    maxWidth: isNarrow ? constraints.maxWidth : 240,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: CheckboxListTile(
+                      activeColor: Colors.black,
+                      value: !_hasDueDate,
+                      onChanged: (value) {
+                        final noDate = value == true;
+                        setState(() {
+                          _hasDueDate = !noDate;
+                          if (_hasDueDate) {
+                            final base = _dueDate ?? DateTime.now();
+                            final hour24 = _selectedPeriod == 'AM'
+                                ? (_selectedHour == 12 ? 0 : _selectedHour)
+                                : (_selectedHour == 12
+                                      ? 12
+                                      : _selectedHour + 12);
+                            _dueDate = DateTime(
+                              base.year,
+                              base.month,
+                              base.day,
+                              hour24,
+                              _selectedMinute,
+                            );
+                          } else {
+                            _dueDate = null;
+                          }
+                        });
+                      },
+                      title: const Text(
+                        'No set date',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                      dense: true,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Audience",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String?>(
+              value: _year,
+              decoration: _inputDecoration(),
+              dropdownColor: Colors.white,
+              items: const [
+                DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text("All Years"),
+                ),
+                DropdownMenuItem<String?>(value: "1", child: Text("1st Year")),
+                DropdownMenuItem<String?>(value: "2", child: Text("2nd Year")),
+                DropdownMenuItem<String?>(value: "3", child: Text("3rd Year")),
+                DropdownMenuItem<String?>(value: "4", child: Text("4th Year")),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _year = value;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _hasDueDate
+                  ? 'Selected time: ${_formattedTime()} $_selectedPeriod'
+                  : 'No due date set',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Assignment Details",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _instructionsCtrl,
+              maxLines: 6,
+              decoration: _inputDecoration(
+                hintText: "Enter assignment instructions...",
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -734,6 +931,7 @@ class _CreateFormViewState extends State<CreateFormView> {
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 280),
+      clipBehavior: Clip.hardEdge,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -753,19 +951,19 @@ class _CreateFormViewState extends State<CreateFormView> {
             )
           : ReorderableListView.builder(
               shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
               itemCount: _fields.length,
               onReorder: _reorderFields,
               proxyDecorator: (child, index, animation) {
-                return Material(
-                  color: Colors.transparent,
-                  child: child,
-                );
+                return Material(color: Colors.transparent, child: child);
               },
               itemBuilder: (context, index) {
                 final field = _fields[index];
                 return Padding(
-                  key: ValueKey('form-field-$index-${field["type"]}-${field["label"]}'),
+                  key: ValueKey(
+                    'form-field-$index-${field["type"]}-${field["label"]}',
+                  ),
                   padding: const EdgeInsets.only(bottom: 10),
                   child: _BuilderFieldTile(
                     field: field,
@@ -779,7 +977,66 @@ class _CreateFormViewState extends State<CreateFormView> {
     );
   }
 
-  Widget _addInputPanel() {
+  Widget _addInputPanel({bool isCompact = false}) {
+    final buttons = [
+      _InputTypeButton(
+        icon: Icons.text_snippet_outlined,
+        label: "Text Field",
+        onTap: () => _addFieldOfType("text"),
+        isCompact: isCompact,
+      ),
+      _InputTypeButton(
+        icon: Icons.notes_outlined,
+        label: "Text Area",
+        onTap: () => _addFieldOfType("textarea"),
+        isCompact: isCompact,
+      ),
+      _InputTypeButton(
+        icon: Icons.check_box_outlined,
+        label: "Check Box",
+        onTap: () => _addFieldOfType("checkbox"),
+        isCompact: isCompact,
+      ),
+      _InputTypeButton(
+        icon: Icons.calendar_today_outlined,
+        label: "Date",
+        onTap: () => _addFieldOfType("date"),
+        isCompact: isCompact,
+      ),
+      _InputTypeButton(
+        icon: Icons.event_note_outlined,
+        label: "Year",
+        onTap: () => _addFieldOfType("year"),
+        isCompact: isCompact,
+      ),
+      _InputTypeButton(
+        icon: Icons.draw_outlined,
+        label: "Signature",
+        onTap: () => _addFieldOfType("signature"),
+        isCompact: isCompact,
+      ),
+    ];
+
+    if (isCompact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Text(
+                "Add input",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(width: 8),
+              Icon(Icons.add_circle_outline, size: 20),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(spacing: 10, runSpacing: 10, children: buttons),
+        ],
+      );
+    }
+
     return SizedBox(
       width: 170,
       child: Column(
@@ -805,36 +1062,7 @@ class _CreateFormViewState extends State<CreateFormView> {
               ],
             ),
           ),
-          _InputTypeButton(
-            icon: Icons.text_snippet_outlined,
-            label: "Text Field",
-            onTap: () => _addFieldOfType("text"),
-          ),
-          _InputTypeButton(
-            icon: Icons.notes_outlined,
-            label: "Text Area",
-            onTap: () => _addFieldOfType("textarea"),
-          ),
-          _InputTypeButton(
-            icon: Icons.check_box_outlined,
-            label: "Check Box",
-            onTap: () => _addFieldOfType("checkbox"),
-          ),
-          _InputTypeButton(
-            icon: Icons.calendar_today_outlined,
-            label: "Date",
-            onTap: () => _addFieldOfType("date"),
-          ),
-          _InputTypeButton(
-            icon: Icons.event_note_outlined,
-            label: "Year",
-            onTap: () => _addFieldOfType("year"),
-          ),
-          _InputTypeButton(
-            icon: Icons.draw_outlined,
-            label: "Signature",
-            onTap: () => _addFieldOfType("signature"),
-          ),
+          ...buttons,
         ],
       ),
     );
@@ -1040,8 +1268,8 @@ class _BuilderFieldTile extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-              SizedBox(
-                width: 120,
+              ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 120, maxWidth: 220),
                 child: TextFormField(
                   enabled: false,
                   decoration: InputDecoration(
@@ -1166,11 +1394,11 @@ class _BuilderFieldTile extends StatelessWidget {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade400,
-                    ),
+                    borderSide: BorderSide(color: Colors.grey.shade400),
                   ),
-                  hintText: placeholder.isEmpty ? "Enter description" : placeholder,
+                  hintText: placeholder.isEmpty
+                      ? "Enter description"
+                      : placeholder,
                 ),
               ),
             ],
@@ -1199,8 +1427,8 @@ class _BuilderFieldTile extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-              SizedBox(
-                width: 220,
+              ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 120, maxWidth: 220),
                 child: TextFormField(
                   enabled: false,
                   decoration: InputDecoration(
@@ -1213,9 +1441,7 @@ class _BuilderFieldTile extends StatelessWidget {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(4),
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade400,
-                      ),
+                      borderSide: BorderSide(color: Colors.grey.shade400),
                     ),
                     hintText: _hintForType(type),
                   ),
@@ -1227,53 +1453,35 @@ class _BuilderFieldTile extends StatelessWidget {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final type = field["type"]?.toString() ?? "text";
-    final label = field["label"]?.toString() ?? "";
+  Widget _fieldActions(BuildContext context, String type, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          onPressed: () async {
+            final type = field["type"]?.toString() ?? "text";
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFF2A89D8), width: 1.5),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        children: [
-          ReorderableDragStartListener(
-            index: reorderIndex,
-            child: const SizedBox(
-              width: 24,
-              child: Center(
-                child: Icon(
-                  Icons.drag_indicator,
-                  size: 20,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
+            if (type == "date") {
+              final config = _dateConfig();
+              final leftTextController = TextEditingController(text: label);
+              final placeholderController = TextEditingController(
+                text: (config["datePlaceholder"] ?? "MM/DD/YYYY").toString(),
+              );
 
-          Expanded(child: _buildPreviewField(context)),
-
-          const SizedBox(width: 8),
-
-          IconButton(
-            onPressed: () async {
-              final type = field["type"]?.toString() ?? "text";
-
-              if (type == "date") {
-                final config = _dateConfig();
-                final leftTextController = TextEditingController(text: label);
-                final placeholderController = TextEditingController(
-                  text: (config["datePlaceholder"] ?? "MM/DD/YYYY").toString(),
-                );
-
-                final updated = await showDialog<Map<String, dynamic>>(
-                  context: context,
-                  builder: (dialogContext) {
-                    return AlertDialog(
+              final updated = await showDialog<Map<String, dynamic>>(
+                context: context,
+                builder: (dialogContext) {
+                  return Theme(
+                    data: Theme.of(dialogContext).copyWith(
+                      colorScheme: Theme.of(dialogContext).colorScheme.copyWith(
+                        primary: Colors.black,
+                        onPrimary: Colors.white,
+                        surface: Colors.white,
+                      ),
+                    ),
+                    child: AlertDialog(
+                      backgroundColor: Colors.white,
+                      surfaceTintColor: Colors.white,
                       title: const Text('Edit Date Field'),
                       content: SizedBox(
                         width: 420,
@@ -1301,6 +1509,9 @@ class _BuilderFieldTile extends StatelessWidget {
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(dialogContext),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.black,
+                          ),
                           child: const Text('Cancel'),
                         ),
                         ElevatedButton(
@@ -1320,34 +1531,71 @@ class _BuilderFieldTile extends StatelessWidget {
                               },
                             });
                           },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
+                          ),
                           child: const Text('Save'),
                         ),
                       ],
-                    );
-                  },
-                );
+                    ),
+                  );
+                },
+              );
 
-                if (updated != null) {
-                  onChanged(updated);
-                }
-
-                leftTextController.dispose();
-                placeholderController.dispose();
-                return;
+              if (updated != null) {
+                onChanged(updated);
               }
 
-              if (type == "year") {
-                final leftTextController = TextEditingController(text: label);
-                final updated = await showDialog<Map<String, dynamic>>(
-                  context: context,
-                  builder: (dialogContext) {
-                    return AlertDialog(
-                      title: const Text('Edit Year Field'),
-                      content: SizedBox(
-                        width: 420,
+              leftTextController.dispose();
+              placeholderController.dispose();
+              return;
+            }
+
+            if (type == "year") {
+              final leftTextController = TextEditingController(text: label);
+              final updated = await showDialog<Map<String, dynamic>>(
+                context: context,
+                builder: (dialogContext) {
+                  return Dialog(
+                    backgroundColor: Colors.transparent,
+                    insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 18,
+                              offset: Offset(0, 8),
+                            ),
+                          ],
+                        ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Edit Year Field',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.close),
+                                  onPressed: () => Navigator.pop(dialogContext),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
                             TextField(
                               controller: leftTextController,
                               decoration: const InputDecoration(
@@ -1355,50 +1603,84 @@ class _BuilderFieldTile extends StatelessWidget {
                                 hintText: 'Example: Graduation Year:',
                               ),
                             ),
+                            const SizedBox(height: 20),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Wrap(
+                                spacing: 10,
+                                children: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dialogContext),
+                                    style: TextButton.styleFrom(
+                                      backgroundColor:
+                                          Colors.white, // Background color
+                                      foregroundColor:
+                                          Colors.black, // Text and icon color
+                                    ),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.black,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pop(dialogContext, {
+                                        "label": leftTextController.text.trim(),
+                                        "type": field["type"],
+                                        "required": field["required"],
+                                        "placeholder": field["placeholder"],
+                                        "helpText": field["helpText"],
+                                        "sortOrder": field["sortOrder"],
+                                        "configJson": {
+                                          "yearPlaceholder": "YYYY",
+                                        },
+                                      });
+                                    },
+                                    child: const Text('Save'),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(dialogContext),
-                          child: const Text('Cancel'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(dialogContext, {
-                              "label": leftTextController.text.trim(),
-                              "type": field["type"],
-                              "required": field["required"],
-                              "placeholder": field["placeholder"],
-                              "helpText": field["helpText"],
-                              "sortOrder": field["sortOrder"],
-                              "configJson": {"yearPlaceholder": "YYYY"},
-                            });
-                          },
-                          child: const Text('Save'),
-                        ),
-                      ],
-                    );
-                  },
-                );
+                    ),
+                  );
+                },
+              );
 
-                if (updated != null) {
-                  onChanged(updated);
-                }
-                leftTextController.dispose();
-                return;
+              if (updated != null) {
+                onChanged(updated);
               }
+              leftTextController.dispose();
+              return;
+            }
 
-              if (type == "checkbox") {
-                final leftTextController = TextEditingController(text: label);
-                final optionControllers = _checkboxOptions()
-                    .map((option) => TextEditingController(text: option))
-                    .toList();
+            if (type == "checkbox") {
+              final leftTextController = TextEditingController(text: label);
+              final optionControllers = _checkboxOptions()
+                  .map((option) => TextEditingController(text: option))
+                  .toList();
 
-                final updated = await showDialog<Map<String, dynamic>>(
-                  context: context,
-                  builder: (dialogContext) {
-                    return AlertDialog(
+              final updated = await showDialog<Map<String, dynamic>>(
+                context: context,
+                builder: (dialogContext) {
+                  return Theme(
+                    data: Theme.of(dialogContext).copyWith(
+                      colorScheme: Theme.of(dialogContext).colorScheme.copyWith(
+                        primary: Colors.black,
+                        onPrimary: Colors.white,
+                        surface: Colors.white,
+                      ),
+                    ),
+                    child: AlertDialog(
+                      backgroundColor: Colors.white,
+                      surfaceTintColor: Colors.white,
                       title: const Text('Edit Checkbox Field'),
                       content: StatefulBuilder(
                         builder: (context, setDialogState) {
@@ -1451,8 +1733,7 @@ class _BuilderFieldTile extends StatelessWidget {
                                               const SizedBox(width: 8),
                                               IconButton(
                                                 onPressed:
-                                                    optionControllers.length <=
-                                                        1
+                                                    optionControllers.length <= 1
                                                     ? null
                                                     : () {
                                                         setDialogState(() {
@@ -1486,6 +1767,9 @@ class _BuilderFieldTile extends StatelessWidget {
                                       },
                                       icon: const Icon(Icons.add),
                                       label: const Text('Add option'),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.black,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -1497,6 +1781,9 @@ class _BuilderFieldTile extends StatelessWidget {
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(dialogContext),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.black,
+                          ),
                           child: const Text('Cancel'),
                         ),
                         ElevatedButton(
@@ -1520,29 +1807,44 @@ class _BuilderFieldTile extends StatelessWidget {
                               },
                             });
                           },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
+                          ),
                           child: const Text('Save'),
                         ),
                       ],
-                    );
-                  },
-                );
+                    ),
+                  );
+                },
+              );
 
-                if (updated != null) {
-                  onChanged(updated);
-                }
-                for (final controller in optionControllers) {
-                  controller.dispose();
-                }
-                return;
+              if (updated != null) {
+                onChanged(updated);
               }
+              for (final controller in optionControllers) {
+                controller.dispose();
+              }
+              return;
+            }
 
-              if (type == "signature") {
-                final leftTextController = TextEditingController(text: label);
+            if (type == "signature") {
+              final leftTextController = TextEditingController(text: label);
 
-                final updated = await showDialog<Map<String, dynamic>>(
-                  context: context,
-                  builder: (dialogContext) {
-                    return AlertDialog(
+              final updated = await showDialog<Map<String, dynamic>>(
+                context: context,
+                builder: (dialogContext) {
+                  return Theme(
+                    data: Theme.of(dialogContext).copyWith(
+                      colorScheme: Theme.of(dialogContext).colorScheme.copyWith(
+                        primary: Colors.black,
+                        onPrimary: Colors.white,
+                        surface: Colors.white,
+                      ),
+                    ),
+                    child: AlertDialog(
+                      backgroundColor: Colors.white,
+                      surfaceTintColor: Colors.white,
                       title: const Text('Edit Signature Field'),
                       content: SizedBox(
                         width: 420,
@@ -1557,6 +1859,9 @@ class _BuilderFieldTile extends StatelessWidget {
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(dialogContext),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.black,
+                          ),
                           child: const Text('Cancel'),
                         ),
                         ElevatedButton(
@@ -1571,26 +1876,41 @@ class _BuilderFieldTile extends StatelessWidget {
                               "configJson": field["configJson"],
                             });
                           },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
+                          ),
                           child: const Text('Save'),
                         ),
                       ],
-                    );
-                  },
-                );
+                    ),
+                  );
+                },
+              );
 
-                if (updated != null) {
-                  onChanged(updated);
-                }
-
-                leftTextController.dispose();
-                return;
+              if (updated != null) {
+                onChanged(updated);
               }
 
-              final controller = TextEditingController(text: label);
-              final updated = await showDialog<String>(
-                context: context,
-                builder: (dialogContext) {
-                  return AlertDialog(
+              leftTextController.dispose();
+              return;
+            }
+
+            final controller = TextEditingController(text: label);
+            final updated = await showDialog<String>(
+              context: context,
+              builder: (dialogContext) {
+                return Theme(
+                  data: Theme.of(dialogContext).copyWith(
+                    colorScheme: Theme.of(dialogContext).colorScheme.copyWith(
+                      primary: Colors.black,
+                      onPrimary: Colors.white,
+                      surface: Colors.white,
+                    ),
+                  ),
+                  child: AlertDialog(
+                    backgroundColor: Colors.white,
+                    surfaceTintColor: Colors.white,
                     title: const Text('Edit Field Label'),
                     content: TextField(
                       controller: controller,
@@ -1602,68 +1922,156 @@ class _BuilderFieldTile extends StatelessWidget {
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(dialogContext),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.black,
+                        ),
                         child: const Text('Cancel'),
                       ),
                       ElevatedButton(
-                        onPressed: () => Navigator.pop(
-                          dialogContext,
-                          controller.text.trim(),
+                        onPressed: () =>
+                            Navigator.pop(dialogContext, controller.text.trim()),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
                         ),
                         child: const Text('Save'),
                       ),
                     ],
-                  );
-                },
-              );
+                  ),
+                );
+              },
+            );
 
-              if (updated != null) {
-                onChanged({...field, "label": updated});
-              }
-            },
-            icon: const Icon(Icons.edit_outlined, size: 18),
-            splashRadius: 18,
-            tooltip: 'Edit label',
-          ),
+            if (updated != null) {
+              onChanged({...field, "label": updated});
+            }
+          },
+          icon: const Icon(Icons.edit_outlined, size: 18),
+          splashRadius: 18,
+          tooltip: 'Edit label',
+        ),
+        PopupMenuButton<String>(
+          tooltip: "Field Type",
+          color: Colors.white,
+          onSelected: (value) {
+            onChanged({
+              ...field,
+              "type": value,
+              "placeholder": _defaultPlaceholderForPopup(value),
+              "configJson": value == "checkbox"
+                  ? {
+                      "options": ["Option 1"],
+                    }
+                  : value == "date"
+                  ? {"datePlaceholder": "MM/DD/YYYY"}
+                  : value == "year"
+                  ? {"yearPlaceholder": "YYYY"}
+                  : field["configJson"],
+            });
+          },
+          itemBuilder: (_) => [
+            PopupMenuItem(
+              value: "text",
+              child: const Text("Text Field", style: TextStyle(color: Colors.black)),
+            ),
+            PopupMenuItem(
+              value: "textarea",
+              child: const Text("Text Area", style: TextStyle(color: Colors.black)),
+            ),
+            PopupMenuItem(
+              value: "checkbox",
+              child: const Text("Check Box", style: TextStyle(color: Colors.black)),
+            ),
+            PopupMenuItem(
+              value: "date",
+              child: const Text("Date", style: TextStyle(color: Colors.black)),
+            ),
+            PopupMenuItem(
+              value: "year",
+              child: const Text("Year", style: TextStyle(color: Colors.black)),
+            ),
+            PopupMenuItem(
+              value: "signature",
+              child: const Text("Signature", style: TextStyle(color: Colors.black)),
+            ),
+          ],
+          child: Icon(Icons.tune, size: 18, color: Colors.grey.shade700),
+        ),
+        const SizedBox(width: 4),
+        IconButton(
+          onPressed: onRemove,
+          icon: const Icon(Icons.delete, color: Colors.red),
+          splashRadius: 18,
+        ),
+      ],
+    );
+  }
 
-          PopupMenuButton<String>(
-            tooltip: "Field Type",
-            onSelected: (value) {
-              onChanged({
-                ...field,
-                "type": value,
-                "placeholder": _defaultPlaceholderForPopup(value),
-                "configJson": value == "checkbox"
-                    ? {
-                        "options": ["Option 1"],
-                      }
-                    : value == "date"
-                    ? {"datePlaceholder": "MM/DD/YYYY"}
-                    : value == "year"
-                    ? {
-                        "yearPlaceholder": "YYYY",
-                      }
-                    : field["configJson"],
-              });
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: "text", child: Text("Text Field")),
-              PopupMenuItem(value: "textarea", child: Text("Text Area")),
-              PopupMenuItem(value: "checkbox", child: Text("Check Box")),
-              PopupMenuItem(value: "date", child: Text("Date")),
-              PopupMenuItem(value: "year", child: Text("Year")),
-              PopupMenuItem(value: "signature", child: Text("Signature")),
+  @override
+  Widget build(BuildContext context) {
+    final type = field["type"]?.toString() ?? "text";
+    final label = field["label"]?.toString() ?? "";
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFF2A89D8), width: 1.5),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 520;
+
+          if (isNarrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    ReorderableDragStartListener(
+                      index: reorderIndex,
+                      child: const SizedBox(
+                        width: 24,
+                        child: Center(
+                          child: Icon(
+                            Icons.drag_indicator,
+                            size: 20,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    _fieldActions(context, type, label),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _buildPreviewField(context),
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              ReorderableDragStartListener(
+                index: reorderIndex,
+                child: const SizedBox(
+                  width: 24,
+                  child: Center(
+                    child: Icon(
+                      Icons.drag_indicator,
+                      size: 20,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(child: _buildPreviewField(context)),
+              const SizedBox(width: 8),
+              _fieldActions(context, type, label),
             ],
-            child: Icon(Icons.tune, size: 18, color: Colors.grey.shade700),
-          ),
-
-          const SizedBox(width: 4),
-
-          IconButton(
-            onPressed: onRemove,
-            icon: const Icon(Icons.delete, color: Colors.red),
-            splashRadius: 18,
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -1710,30 +2118,38 @@ class _InputTypeButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.isCompact = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(isCompact ? 999 : 0),
       child: Container(
-        height: 50,
+        height: isCompact ? 42 : 50,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          border: Border(
-            left: BorderSide(color: Colors.grey.shade300),
-            right: BorderSide(color: Colors.grey.shade300),
-            bottom: BorderSide(color: Colors.grey.shade300),
-          ),
+          color: isCompact ? const Color(0xFFF3F3F3) : null,
+          borderRadius: BorderRadius.circular(isCompact ? 999 : 0),
+          border: isCompact
+              ? Border.all(color: Colors.grey.shade300)
+              : Border(
+                  left: BorderSide(color: Colors.grey.shade300),
+                  right: BorderSide(color: Colors.grey.shade300),
+                  bottom: BorderSide(color: Colors.grey.shade300),
+                ),
         ),
         child: Row(
+          mainAxisSize: isCompact ? MainAxisSize.min : MainAxisSize.max,
           children: [
             Icon(icon, size: 20, color: Colors.black87),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Text(label, style: const TextStyle(fontSize: 14)),
           ],
         ),
