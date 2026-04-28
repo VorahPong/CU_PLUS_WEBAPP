@@ -4,6 +4,7 @@ import '../../api/student_api.dart';
 import 'package:provider/provider.dart';
 import '../../../auth/controller/auth_controller.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cu_plus_webapp/features/shared/widgets/page_section_header.dart';
 
 class RegisterStudentView extends StatefulWidget {
   const RegisterStudentView({super.key, required this.email});
@@ -80,6 +81,29 @@ class _RegisterStudentViewState extends State<RegisterStudentView> {
     }
   }
 
+  ButtonStyle _outlinedActionButtonStyle() {
+    return OutlinedButton.styleFrom(
+      foregroundColor: Colors.black,
+      backgroundColor: Colors.white,
+      side: BorderSide(color: Colors.grey.shade300),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+  }
+
+  ButtonStyle _primaryActionButtonStyle() {
+    return ElevatedButton.styleFrom(
+      backgroundColor: Colors.black,
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
@@ -88,32 +112,32 @@ class _RegisterStudentViewState extends State<RegisterStudentView> {
       return const Center(child: Text("Access denied"));
     }
 
-    final isMobile = MediaQuery.of(context).size.width < 700;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 700;
 
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(screenWidth < 600 ? 14 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 16.0),
-            child: Text("Register Students", style: TextStyle(fontSize: 24)),
-          ),
-
-          const SizedBox(height: 12),
-
-          Divider(color: Colors.grey.shade300, thickness: 1),
-
-          const SizedBox(height: 16),
+          const PageSectionHeader(title: 'Register Students'),
+          const SizedBox(height: 20),
 
           Expanded(
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(screenWidth < 600 ? 14 : 24),
               decoration: BoxDecoration(
                 color: Colors.white,
-                // borderRadius: BorderRadius.circular(12),
-                // border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade300),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x14000000),
+                    blurRadius: 18,
+                    offset: Offset(0, 8),
+                  ),
+                ],
               ),
               child: Form(
                 key: _formKey,
@@ -206,38 +230,86 @@ class _RegisterStudentViewState extends State<RegisterStudentView> {
                         ],
                       ),
                     ),
-                    // ✅ Submit button bottom-right
-                    if (_error != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
+                    if (_error != null) ...[
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.red.shade200),
+                        ),
                         child: Text(
                           _error!,
                           style: const TextStyle(color: Colors.red),
                         ),
                       ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: ElevatedButton(
-                        onPressed: _loading ? null : _onSubmit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFC425),
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 42,
-                            vertical: 22,
+                    ],
+                    if (isMobile)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: _loading
+                                ? null
+                                : () => context.go('/dashboard/admin/students'),
+                            style: _outlinedActionButtonStyle(),
+                            icon: const Icon(Icons.arrow_back, size: 18),
+                            label: const Text('Cancel'),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            side: BorderSide(color: Colors.grey.shade400),
+                          const SizedBox(height: 10),
+                          ElevatedButton.icon(
+                            onPressed: _loading ? null : _onSubmit,
+                            style: _primaryActionButtonStyle(),
+                            icon: _loading
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.person_add_alt_1, size: 18),
+                            label: Text(_loading ? 'Creating...' : 'Create Student'),
                           ),
-                          elevation: 2,
-                        ),
-                        child: const Text(
-                          "Create",
-                          style: TextStyle(fontSize: 15),
+                        ],
+                      )
+                    else
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Wrap(
+                          alignment: WrapAlignment.end,
+                          spacing: 12,
+                          runSpacing: 10,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: _loading
+                                  ? null
+                                  : () => context.go('/dashboard/admin/students'),
+                              style: _outlinedActionButtonStyle(),
+                              icon: const Icon(Icons.arrow_back, size: 18),
+                              label: const Text('Cancel'),
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: _loading ? null : _onSubmit,
+                              style: _primaryActionButtonStyle(),
+                              icon: _loading
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(Icons.person_add_alt_1, size: 18),
+                              label: Text(_loading ? 'Creating...' : 'Create Student'),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -252,9 +324,15 @@ class _RegisterStudentViewState extends State<RegisterStudentView> {
   // ----------------------------
 
   Widget _fieldLabel(String text) => Text(
-    text,
-    style: const TextStyle(fontSize: 16, color: Color(0xFF111928)),
-  );
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: Colors.black87,
+        ),
+      );
 
   Widget _buildFirstName() {
     return Column(
@@ -346,6 +424,9 @@ class _RegisterStudentViewState extends State<RegisterStudentView> {
           validator: (v) =>
               (v == null || v.isEmpty) ? "Year is required" : null,
           decoration: _inputDecoration(hint: "Select year"),
+          dropdownColor: Colors.white,
+          iconEnabledColor: Colors.black,
+          style: const TextStyle(color: Colors.black, fontSize: 14),
           items: const [
             DropdownMenuItem(value: "1", child: Text("1st Year")),
             DropdownMenuItem(value: "2", child: Text("2nd Year")),
@@ -424,21 +505,22 @@ class _RegisterStudentViewState extends State<RegisterStudentView> {
       hintText: hint,
       hintStyle: const TextStyle(color: Color(0xFF6B7280)),
       filled: true,
-      fillColor: const Color(0xFFF9FAFB),
+      fillColor: Colors.grey.shade50,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.black, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.red),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.red, width: 1.5),
       ),
     );

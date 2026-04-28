@@ -174,141 +174,183 @@ class _CalendarViewState extends State<CalendarView> {
     final days = _buildCalendarDays();
     const weekLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              IconButton(
-                onPressed: _goToPreviousMonth,
-                icon: const Icon(Icons.chevron_left),
-              ),
-              Expanded(
-                child: Text(
-                  _monthLabel(_focusedMonth),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              IconButton(
-                onPressed: _goToNextMonth,
-                icon: const Icon(Icons.chevron_right),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 620;
+        final daySpacing = isCompact ? 3.0 : 6.0;
+        final dayPadding = isCompact ? 5.0 : 7.0;
+
+        return Container(
+          padding: EdgeInsets.all(isCompact ? 10 : 14),
+          constraints: const BoxConstraints(minWidth: 0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade300),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x14000000),
+                blurRadius: 18,
+                offset: Offset(0, 8),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: weekLabels.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              childAspectRatio: 2.4,
-            ),
-            itemBuilder: (context, index) {
-              return Center(
-                child: Text(
-                  weekLabels[index],
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-              );
-            },
-          ),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: days.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              childAspectRatio: 1.1,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemBuilder: (context, index) {
-              final day = days[index];
-              final isCurrentMonth = _isSameMonth(day, _focusedMonth);
-              final isToday = _isSameDay(day, _today);
-              final dayForms = _formsForDay(day);
-
-              return Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isToday
-                      ? Colors.blue.shade50
-                      : isCurrentMonth
-                      ? Colors.white
-                      : Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isToday ? Colors.blue : Colors.grey.shade300,
-                    width: isToday ? 1.5 : 1,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Row(
                   children: [
-                    Text(
-                      '${day.day}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: isCurrentMonth
-                            ? Colors.black87
-                            : Colors.grey.shade500,
+                    _CalendarNavButton(
+                      icon: Icons.chevron_left,
+                      onTap: _goToPreviousMonth,
+                    ),
+                    Expanded(
+                      child: Text(
+                        _monthLabel(_focusedMonth),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: isCompact ? 18 : 22,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    if (dayForms.isNotEmpty)
-                      ...dayForms.take(2).map((form) {
-                        return Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.only(bottom: 4),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            (form['title'] ?? 'Untitled Form').toString(),
+                    _CalendarNavButton(
+                      icon: Icons.chevron_right,
+                      onTap: _goToNextMonth,
+                    ),
+                  ],
+                ),
+                SizedBox(height: isCompact ? 8 : 10),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: weekLabels.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 7,
+                    childAspectRatio: 2.4,
+                  ),
+                  itemBuilder: (context, index) {
+                    return Center(
+                      child: Text(
+                        weekLabels[index],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: isCompact ? 11 : 13,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                SizedBox(height: isCompact ? 4 : 6),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: days.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 7,
+                    childAspectRatio: isCompact ? 0.82 : 1.08,
+                    crossAxisSpacing: daySpacing,
+                    mainAxisSpacing: daySpacing,
+                  ),
+                  itemBuilder: (context, index) {
+                    final day = days[index];
+                    final isCurrentMonth = _isSameMonth(day, _focusedMonth);
+                    final isToday = _isSameDay(day, _today);
+                    final dayForms = _formsForDay(day);
+            
+                    return Container(
+                      padding: EdgeInsets.all(dayPadding),
+                      decoration: BoxDecoration(
+                        color: isToday
+                            ? Colors.black
+                            : isCurrentMonth
+                            ? Colors.white
+                            : Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isToday ? Colors.black : Colors.grey.shade300,
+                          width: isToday ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${day.day}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.green.shade800,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
+                              fontSize: isCompact ? 12 : 14,
+                              color: isToday
+                                  ? Colors.white
+                                  : isCurrentMonth
+                                  ? Colors.black87
+                                  : Colors.grey.shade500,
                             ),
                           ),
-                        );
-                      }),
-                    if (dayForms.length > 2)
-                      Text(
-                        '+${dayForms.length - 2} more',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey.shade700,
-                          fontWeight: FontWeight.w600,
-                        ),
+                          SizedBox(height: isCompact ? 3 : 5),
+                          if (dayForms.isNotEmpty)
+                            ...dayForms.take(isCompact ? 1 : 2).map((form) {
+                              return Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.only(bottom: 4),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isCompact ? 4 : 6,
+                                  vertical: isCompact ? 3 : 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isToday
+                                      ? Colors.white.withOpacity(0.14)
+                                      : const Color(0xFFFFF4CC),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: isToday
+                                        ? Colors.white24
+                                        : const Color(0xFFFFD971),
+                                  ),
+                                ),
+                                child: Text(
+                                  (form['title'] ?? 'Untitled Form').toString(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: isCompact ? 9 : 11,
+                                    color: isToday
+                                        ? Colors.white
+                                        : const Color(0xFF8A5A00),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              );
+                            }),
+                          if (dayForms.length > (isCompact ? 1 : 2))
+                            Text(
+                              '+${dayForms.length - (isCompact ? 1 : 2)} more',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: isCompact ? 9 : 10,
+                                color: isToday ? Colors.white70 : Colors.grey.shade700,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                        ],
                       ),
-                  ],
+                    );
+                  },
                 ),
-              );
-            },
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -317,86 +359,197 @@ class _CalendarViewState extends State<CalendarView> {
     final monthlyForms = _formsForFocusedMonth();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
+      constraints: const BoxConstraints(minWidth: 0),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade300),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Tasks This Month',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF4CC),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.assignment_outlined,
+                  color: Color(0xFFB77900),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tasks This Month',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Forms with upcoming due dates',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           if (monthlyForms.isEmpty)
-            const Text('No forms with due dates this month.')
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Text(
+                'No forms with due dates this month.',
+                style: TextStyle(color: Colors.grey.shade700),
+              ),
+            )
           else
             ...monthlyForms.map((form) {
               final formId = form['id']?.toString();
               final dueDate = _parseDueDate(form);
 
-              return InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () {
-                  if (formId == null) return;
-                  if (isAdmin) {
-                    context.go('/dashboard/admin/forms/$formId/edit');
-                  } else {
-                    context.go('/dashboard/student/forms/$formId');
-                  }
-                },
-                child: Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Material(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.assignment_outlined),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              (form['title'] ?? 'Untitled Form').toString(),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15,
-                              ),
+                    onTap: () {
+                      if (formId == null) return;
+                      if (isAdmin) {
+                        context.go('/dashboard/admin/forms/$formId/edit');
+                      } else {
+                        context.go('/dashboard/student/forms/$formId');
+                      }
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isNarrow = constraints.maxWidth < 360;
+
+                          final iconBox = Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF4CC),
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            if (isAdmin) ...[
+                            child: const Icon(
+                              Icons.description_outlined,
+                              color: Color(0xFFB77900),
+                            ),
+                          );
+
+                          final textContent = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                (form['title'] ?? 'Untitled Form').toString(),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              if (isAdmin) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Year: ${form['year']?.toString().isNotEmpty == true ? form['year'] : 'All Years'}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Colors.grey.shade700,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                               const SizedBox(height: 4),
                               Text(
-                                'Year: ${form['year']?.toString().isNotEmpty == true ? form['year'] : 'All Years'}',
+                                dueDate == null
+                                    ? 'No due date'
+                                    : 'Due: ${_formatDate(dueDate)}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: Colors.grey.shade700,
-                                  fontSize: 12,
+                                  fontSize: 13,
                                 ),
                               ),
                             ],
-                            const SizedBox(height: 4),
-                            Text(
-                              dueDate == null
-                                  ? 'No due date'
-                                  : 'Due: ${_formatDate(dueDate)}',
-                              style: TextStyle(
-                                color: Colors.grey.shade700,
-                                fontSize: 13,
+                          );
+
+                          if (isNarrow) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    iconBox,
+                                    const Spacer(),
+                                    const Icon(
+                                      Icons.chevron_right,
+                                      color: Colors.black54,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                textContent,
+                              ],
+                            );
+                          }
+
+                          return Row(
+                            children: [
+                              iconBox,
+                              const SizedBox(width: 14),
+                              Expanded(child: textContent),
+                              const SizedBox(width: 10),
+                              const Icon(
+                                Icons.chevron_right,
+                                color: Colors.black54,
                               ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          );
+                        },
                       ),
-                      const SizedBox(width: 12),
-                      const Icon(Icons.open_in_new, size: 18),
-                    ],
+                    ),
                   ),
                 ),
               );
@@ -410,9 +563,11 @@ class _CalendarViewState extends State<CalendarView> {
   Widget build(BuildContext context) {
     final isAdmin = widget.isAdmin || context.auth.isAdmin;
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 14 : 24),
       child: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.black),
+            )
           : _error != null
           ? Center(
               child: Column(
@@ -426,6 +581,10 @@ class _CalendarViewState extends State<CalendarView> {
                   const SizedBox(height: 12),
                   OutlinedButton(
                     onPressed: _loadCalendarItems,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.black,
+                      side: BorderSide(color: Colors.grey.shade300),
+                    ),
                     child: const Text('Retry'),
                   ),
                 ],
@@ -434,12 +593,34 @@ class _CalendarViewState extends State<CalendarView> {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 16.0),
-                  child: Text(
-                    isAdmin ? 'Admin Calendar' : 'Calendar',
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
-                  ),
+                Row(
+                  children: [
+                    // Container(
+                    //   width: 42,
+                    //   height: 42,
+                    //   decoration: BoxDecoration(
+                    //     color: const Color(0xFFFFF4CC),
+                    //     borderRadius: BorderRadius.circular(10),
+                    //   ),
+                    //   child: const Icon(
+                    //     Icons.calendar_month_outlined,
+                    //     color: Color(0xFFB77900),
+                    //   ),
+                    // ),
+                    const SizedBox(width: 0),
+                    Expanded(
+                      child: Text(
+                        'Calendar',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          // fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 Divider(color: Colors.grey.shade300, thickness: 1),
@@ -450,13 +631,21 @@ class _CalendarViewState extends State<CalendarView> {
                       final isWide = constraints.maxWidth >= 1000;
 
                       if (isWide) {
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(flex: 3, child: _buildCalendarGrid()),
-                            const SizedBox(width: 20),
-                            Expanded(flex: 2, child: _buildUpcomingList()),
-                          ],
+                        return SingleChildScrollView(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: _buildCalendarGrid(),
+                              ),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                flex: 2,
+                                child: _buildUpcomingList(),
+                              ),
+                            ],
+                          ),
                         );
                       }
 
@@ -474,6 +663,34 @@ class _CalendarViewState extends State<CalendarView> {
                 ),
               ],
             ),
+    );
+  }
+}
+
+class _CalendarNavButton extends StatelessWidget {
+  const _CalendarNavButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.grey.shade50,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Icon(icon, color: Colors.black),
+        ),
+      ),
     );
   }
 }

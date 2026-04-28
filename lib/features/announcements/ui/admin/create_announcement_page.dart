@@ -5,6 +5,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../auth/controller/auth_controller.dart';
 import '../../api/announcement_api.dart';
 
+import 'package:cu_plus_webapp/features/shared/widgets/page_section_header.dart';
 class CreateAnnouncementPage extends StatefulWidget {
   const CreateAnnouncementPage({super.key, this.announcement});
 
@@ -153,6 +154,29 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
     Navigator.pop(context, false);
   }
 
+  ButtonStyle _outlinedActionButtonStyle() {
+    return OutlinedButton.styleFrom(
+      foregroundColor: Colors.black,
+      backgroundColor: Colors.white,
+      side: BorderSide(color: Colors.grey.shade300),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+  }
+
+  ButtonStyle _primaryActionButtonStyle() {
+    return ElevatedButton.styleFrom(
+      backgroundColor: Colors.black,
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
@@ -162,163 +186,79 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
         child: SelectionArea(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 14 : 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 16.0),
-                  child: SelectableText(
-                    _isEditing ? "Edit Announcement/Post" : "Announcement/Post",
-                    style: const TextStyle(fontSize: 24),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Divider(color: Colors.grey.shade300, thickness: 1),
-                const SizedBox(height: 16),
+                const PageSectionHeader(title: 'Announcement/Post'),
+                const SizedBox(height: 20),
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    color: Colors.white,
+                    padding: EdgeInsets.all(
+                      MediaQuery.of(context).size.width < 600 ? 14 : 20,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade300),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x14000000),
+                          blurRadius: 18,
+                          offset: Offset(0, 8),
+                        ),
+                      ],
+                    ),
                     child: Form(
                       key: _formKey,
-                      child: Column(
-                        children: [
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Wrap(
-                              spacing: 20,
-                              runSpacing: 8,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                const SelectableText(
-                                  "To:",
-                                  style: TextStyle(fontSize: 14),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isNarrow = constraints.maxWidth < 620;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildAudienceSection(isNarrow: isNarrow),
+                              const SizedBox(height: 20),
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _messageController,
+                                  expands: true,
+                                  minLines: null,
+                                  maxLines: null,
+                                  textAlignVertical: TextAlignVertical.top,
+                                  validator: (value) => null,
+                                  decoration: _inputDecoration(
+                                    hint: "Type announcement here...",
+                                  ),
                                 ),
-                                _buildCheckBox(
-                                  label: "Everyone",
-                                  value: everyone,
-                                  onChanged: _handleEveryoneChanged,
-                                ),
-                                _buildCheckBox(
-                                  label: "First-Year",
-                                  value: firstYear,
-                                  onChanged: (value) =>
-                                      _handleYearChanged("first", value),
-                                ),
-                                _buildCheckBox(
-                                  label: "Second-Year",
-                                  value: secondYear,
-                                  onChanged: (value) =>
-                                      _handleYearChanged("second", value),
-                                ),
-                                _buildCheckBox(
-                                  label: "Third-Year",
-                                  value: thirdYear,
-                                  onChanged: (value) =>
-                                      _handleYearChanged("third", value),
-                                ),
-                                _buildCheckBox(
-                                  label: "Fourth-Year",
-                                  value: fourthYear,
-                                  onChanged: (value) =>
-                                      _handleYearChanged("fourth", value),
+                              ),
+                              const SizedBox(height: 18),
+                              if (_error != null) ...[
+                                Container(
+                                  width: double.infinity,
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.shade50,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: Colors.red.shade200),
+                                  ),
+                                  child: SelectableText(
+                                    _error!,
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
                                 ),
                               ],
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _messageController,
-                              expands: true,
-                              minLines: null,
-                              maxLines: null,
-                              textAlignVertical: TextAlignVertical.top,
-                              validator: (value) {
-                                return null;
-                              },
-                              decoration: _inputDecoration(
-                                hint: "Type announcement here...",
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          if (_error != null)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: SelectableText(
-                                  _error!,
-                                  style: const TextStyle(color: Colors.red),
-                                ),
-                              ),
-                            ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              OutlinedButton(
-                                onPressed: _loading ? null : _cancelPost,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.black87,
-                                  side: BorderSide(color: Colors.grey.shade400),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 22,
-                                    vertical: 14,
-                                  ),
-                                ),
-                                child: const Text("Cancel"),
-                              ),
-                              const SizedBox(width: 12),
-                              OutlinedButton(
-                                onPressed: _loading
-                                    ? null
-                                    : () => _onSubmit(saveAsDraft: true),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.black87,
-                                  side: BorderSide(color: Colors.grey.shade400),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 22,
-                                    vertical: 14,
-                                  ),
-                                ),
-                                child: const Text("Save as Draft"),
-                              ),
-                              const SizedBox(width: 12),
-                              ElevatedButton(
-                                onPressed: _loading
-                                    ? null
-                                    : () => _onSubmit(saveAsDraft: false),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 22,
-                                    vertical: 14,
-                                  ),
-                                ),
-                                child: _loading
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : Text(
-                                        _isEditing ? "Save Changes" : "Confirm",
-                                      ),
-                              ),
+                              _buildActionButtons(isNarrow: isNarrow),
                             ],
-                          ),
-                        ],
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -331,21 +271,202 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
     );
   }
 
+
+  Widget _buildAudienceSection({required bool isNarrow}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF4CC),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.groups_outlined,
+                  color: Color(0xFFB77900),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Audience',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Choose who should receive this announcement',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: isNarrow ? 8 : 12,
+            runSpacing: 10,
+            children: [
+              _buildCheckBox(
+                label: "Everyone",
+                value: everyone,
+                onChanged: _handleEveryoneChanged,
+              ),
+              _buildCheckBox(
+                label: "First-Year",
+                value: firstYear,
+                onChanged: (value) => _handleYearChanged("first", value),
+              ),
+              _buildCheckBox(
+                label: "Second-Year",
+                value: secondYear,
+                onChanged: (value) => _handleYearChanged("second", value),
+              ),
+              _buildCheckBox(
+                label: "Third-Year",
+                value: thirdYear,
+                onChanged: (value) => _handleYearChanged("third", value),
+              ),
+              _buildCheckBox(
+                label: "Fourth-Year",
+                value: fourthYear,
+                onChanged: (value) => _handleYearChanged("fourth", value),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons({required bool isNarrow}) {
+    final cancelButton = OutlinedButton.icon(
+      onPressed: _loading ? null : _cancelPost,
+      style: _outlinedActionButtonStyle(),
+      icon: const Icon(Icons.close, size: 18),
+      label: const Text("Cancel"),
+    );
+
+    final draftButton = OutlinedButton.icon(
+      onPressed: _loading ? null : () => _onSubmit(saveAsDraft: true),
+      style: _outlinedActionButtonStyle(),
+      icon: const Icon(Icons.drafts_outlined, size: 18),
+      label: const Text("Save as Draft"),
+    );
+
+    final confirmButton = ElevatedButton.icon(
+      onPressed: _loading ? null : () => _onSubmit(saveAsDraft: false),
+      style: _primaryActionButtonStyle(),
+      icon: _loading
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const Icon(Icons.check, size: 18),
+      label: Text(_isEditing ? "Save Changes" : "Confirm"),
+    );
+
+    if (isNarrow) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          cancelButton,
+          const SizedBox(height: 10),
+          draftButton,
+          const SizedBox(height: 10),
+          confirmButton,
+        ],
+      );
+    }
+
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Wrap(
+        alignment: WrapAlignment.end,
+        spacing: 12,
+        runSpacing: 10,
+        children: [
+          cancelButton,
+          draftButton,
+          confirmButton,
+        ],
+      ),
+    );
+  }
+
   Widget _buildCheckBox({
     required String label,
     required bool value,
     required ValueChanged<bool?> onChanged,
   }) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SelectableText(label),
-        Checkbox(
-          value: value,
-          onChanged: onChanged,
-          visualDensity: VisualDensity.compact,
+    return Material(
+      color: value ? const Color(0xFFFFF4CC) : Colors.white,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: () => onChanged(!value),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: value ? const Color(0xFFFFD971) : Colors.grey.shade300,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: value ? FontWeight.w700 : FontWeight.w500,
+                    color: value ? const Color(0xFF8A5A00) : Colors.black87,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Checkbox(
+                value: value,
+                onChanged: onChanged,
+                visualDensity: VisualDensity.compact,
+                activeColor: Colors.black,
+                checkColor: Colors.white,
+                side: BorderSide(color: Colors.grey.shade500),
+              ),
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
 
@@ -354,7 +475,8 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
       hintText: hint,
       hintStyle: const TextStyle(color: Color(0xFF6B7280)),
       filled: true,
-      fillColor: const Color(0xFFF2F2F2),
+      fillColor: Colors.grey.shade50,
+      contentPadding: const EdgeInsets.all(16),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
