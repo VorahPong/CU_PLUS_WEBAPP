@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cu_plus_webapp/core/network/api_client.dart';
 import 'package:cu_plus_webapp/features/forms/api/forms_api.dart';
 import 'package:cu_plus_webapp/features/forms/widgets/form_renderer.dart';
+import 'package:cu_plus_webapp/features/shared/widgets/page_section_header.dart';
 
 import 'dart:convert';
 import 'dart:typed_data';
@@ -447,6 +448,29 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
         });
       }
     }
+  }
+
+  ButtonStyle _outlinedActionButtonStyle() {
+    return OutlinedButton.styleFrom(
+      foregroundColor: Colors.black,
+      backgroundColor: Colors.white,
+      side: BorderSide(color: Colors.grey.shade300),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+  }
+
+  ButtonStyle _primaryActionButtonStyle() {
+    return ElevatedButton.styleFrom(
+      backgroundColor: Colors.black,
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
   }
 
   InputDecoration _inputDecoration({
@@ -940,11 +964,15 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        backgroundColor: Color(0xFFF5F5F5),
+        body: Center(child: CircularProgressIndicator(color: Colors.black)),
+      );
     }
 
     if (_error != null) {
       return Scaffold(
+        backgroundColor: const Color(0xFFF5F5F5),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -958,6 +986,7 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
                 const SizedBox(height: 12),
                 OutlinedButton(
                   onPressed: _loadForm,
+                  style: _outlinedActionButtonStyle(),
                   child: const Text('Retry'),
                 ),
               ],
@@ -975,118 +1004,279 @@ class _StudentFormFillViewState extends State<StudentFormFillView> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: Padding(
-        padding: const EdgeInsets.all(0),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: SelectionArea(
-            child: ListView(
-              children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 16.0),
-                child: Text(
-                  'Course Content',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Divider(color: Colors.grey.shade300, thickness: 1),
-              const SizedBox(height: 20),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              if (instructions.trim().isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(
-                  instructions,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade700,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 24),
-              FormRenderer(
-                fields: _fields,
-                readOnly: _isReadOnly,
-                textControllers: _textControllers,
-                checkboxValues: _checkboxValues,
-                dateValues: _dateValues,
-                yearControllers: _yearControllers,
-                signaturePadKeys: _signaturePadKeys,
-                signatureValues: _signatureValues,
-                grade: _submission?['grade']?.toString(),
-                score: _submission?['score'] as num?,
-                feedback: _submission?['feedback']?.toString(),
-                onCheckboxChanged: (fieldId, option, checked) {
-                  setState(() {
-                    final set = _checkboxValues[fieldId] ?? <String>{};
-                    if (checked) {
-                      set.add(option);
-                    } else {
-                      set.remove(option);
-                    }
-                    _checkboxValues[fieldId] = set;
-                  });
-                },
-                onDateTap: (fieldId) {
-                  _pickDate(fieldId);
-                },
-                onSignatureDrawEnd: (fieldId) {
-                  return () {
-                    setState(() {
-                      _signatureValues[fieldId] = 'drawn';
-                    });
-                  };
-                },
-                onSignatureClear: (fieldId) {
-                  return () {
-                    _clearSignature(fieldId);
-                  };
-                },
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: _isReadOnly
-                    ? OutlinedButton(
-                        onPressed: () {
-                          context.go('/dashboard');
-                        },
-                        child: const Text('Back to Dashboard'),
-                      )
-                    : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          OutlinedButton(
-                            onPressed: _submitting ? null : _saveDraft,
-                            child: const Text('Save as Draft'),
-                          ),
-                          const SizedBox(width: 12),
-                          ElevatedButton(
-                            onPressed: _submitting ? null : _submitForm,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: Text(
-                              _submitting ? 'Submitting...' : 'Submit',
-                            ),
+        padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 14 : 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const PageSectionHeader(title: 'Course Content'),
+            const SizedBox(height: 20),
+            Expanded(
+              child: SelectionArea(
+                child: ListView(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(
+                        MediaQuery.of(context).size.width < 600 ? 16 : 20,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade300),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x14000000),
+                            blurRadius: 18,
+                            offset: Offset(0, 8),
                           ),
                         ],
                       ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isNarrow = constraints.maxWidth < 520;
+                              final iconBox = Container(
+                                width: 54,
+                                height: 54,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF4CC),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: const Color(0xFFFFD971)),
+                                ),
+                                child: const Icon(
+                                  Icons.description_outlined,
+                                  color: Color(0xFFB77900),
+                                ),
+                              );
+
+                              final titleInfo = Column(
+                                crossAxisAlignment: isNarrow
+                                    ? CrossAxisAlignment.center
+                                    : CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    title,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: isNarrow ? TextAlign.center : TextAlign.start,
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  if (_isReadOnly) ...[
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 7,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFFF4CC),
+                                        borderRadius: BorderRadius.circular(999),
+                                        border: Border.all(color: const Color(0xFFFFD971)),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.lock_outline,
+                                            size: 15,
+                                            color: Color(0xFF8A5A00),
+                                          ),
+                                          SizedBox(width: 5),
+                                          Text(
+                                            'Submitted',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF8A5A00),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              );
+
+                              if (isNarrow) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    iconBox,
+                                    const SizedBox(height: 12),
+                                    titleInfo,
+                                  ],
+                                );
+                              }
+
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  iconBox,
+                                  const SizedBox(width: 14),
+                                  Expanded(child: titleInfo),
+                                ],
+                              );
+                            },
+                          ),
+                          if (instructions.trim().isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                              child: Text(
+                                instructions,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade700,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(
+                        MediaQuery.of(context).size.width < 600 ? 14 : 20,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade300),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x14000000),
+                            blurRadius: 18,
+                            offset: Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: FormRenderer(
+                        fields: _fields,
+                        readOnly: _isReadOnly,
+                        textControllers: _textControllers,
+                        checkboxValues: _checkboxValues,
+                        dateValues: _dateValues,
+                        yearControllers: _yearControllers,
+                        signaturePadKeys: _signaturePadKeys,
+                        signatureValues: _signatureValues,
+                        grade: _submission?['grade']?.toString(),
+                        score: _submission?['score'] as num?,
+                        feedback: _submission?['feedback']?.toString(),
+                        onCheckboxChanged: (fieldId, option, checked) {
+                          setState(() {
+                            final set = _checkboxValues[fieldId] ?? <String>{};
+                            if (checked) {
+                              set.add(option);
+                            } else {
+                              set.remove(option);
+                            }
+                            _checkboxValues[fieldId] = set;
+                          });
+                        },
+                        onDateTap: (fieldId) {
+                          _pickDate(fieldId);
+                        },
+                        onSignatureDrawEnd: (fieldId) {
+                          return () {
+                            setState(() {
+                              _signatureValues[fieldId] = 'drawn';
+                            });
+                          };
+                        },
+                        onSignatureClear: (fieldId) {
+                          return () {
+                            _clearSignature(fieldId);
+                          };
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isNarrow = constraints.maxWidth < 520;
+
+                        if (_isReadOnly) {
+                          final backButton = OutlinedButton.icon(
+                            onPressed: () {
+                              context.go('/dashboard');
+                            },
+                            style: _outlinedActionButtonStyle(),
+                            icon: const Icon(Icons.arrow_back, size: 18),
+                            label: const Text('Back to Dashboard'),
+                          );
+
+                          return Align(
+                            alignment: isNarrow ? Alignment.center : Alignment.centerRight,
+                            child: isNarrow
+                                ? SizedBox(width: double.infinity, child: backButton)
+                                : backButton,
+                          );
+                        }
+
+                        final draftButton = OutlinedButton.icon(
+                          onPressed: _submitting ? null : _saveDraft,
+                          style: _outlinedActionButtonStyle(),
+                          icon: const Icon(Icons.drafts_outlined, size: 18),
+                          label: const Text('Save as Draft'),
+                        );
+
+                        final submitButton = ElevatedButton.icon(
+                          onPressed: _submitting ? null : _submitForm,
+                          style: _primaryActionButtonStyle(),
+                          icon: _submitting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.check, size: 18),
+                          label: Text(_submitting ? 'Submitting...' : 'Submit'),
+                        );
+
+                        if (isNarrow) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              draftButton,
+                              const SizedBox(height: 10),
+                              submitButton,
+                            ],
+                          );
+                        }
+
+                        return Align(
+                          alignment: Alignment.centerRight,
+                          child: Wrap(
+                            spacing: 12,
+                            runSpacing: 10,
+                            children: [draftButton, submitButton],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ]),
-          ),
+            ),
+          ],
         ),
       ),
     );
