@@ -5,6 +5,7 @@ import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
 
 import 'package:cu_plus_webapp/core/network/api_client.dart';
 import 'package:cu_plus_webapp/features/forms/api/forms_api.dart';
+import 'package:cu_plus_webapp/features/shared/widgets/page_section_header.dart';
 import 'package:cu_plus_webapp/features/forms/widgets/form_renderer.dart';
 
 class AdminFormSubmissionDetailView extends StatefulWidget {
@@ -180,30 +181,225 @@ class _AdminFormSubmissionDetailViewState
     return (_submission?['feedback'] ?? '').toString().trim();
   }
 
+  ButtonStyle _outlinedActionButtonStyle() {
+    return OutlinedButton.styleFrom(
+      foregroundColor: Colors.black,
+      backgroundColor: Colors.white,
+      side: BorderSide(color: Colors.grey.shade300),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+  }
+
+  ButtonStyle _primaryActionButtonStyle() {
+    return ElevatedButton.styleFrom(
+      backgroundColor: Colors.black,
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+  }
+
+  InputDecoration _dialogInputDecoration({
+    required String label,
+    String? hint,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      filled: true,
+      fillColor: Colors.grey.shade50,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.black, width: 1.5),
+      ),
+    );
+  }
+
+  Widget _statusChip(String status) {
+    Color bg;
+    Color fg;
+    IconData icon;
+
+    switch (status) {
+      case 'graded':
+        bg = const Color(0xFFFFF4CC);
+        fg = const Color(0xFF8A5A00);
+        icon = Icons.verified_outlined;
+        break;
+      case 'under_review':
+        bg = Colors.grey.shade100;
+        fg = Colors.grey.shade800;
+        icon = Icons.rate_review_outlined;
+        break;
+      case 'returned':
+        bg = Colors.red.shade50;
+        fg = Colors.red.shade700;
+        icon = Icons.assignment_return_outlined;
+        break;
+      case 'draft':
+        bg = Colors.grey.shade100;
+        fg = Colors.grey.shade700;
+        icon = Icons.drafts_outlined;
+        break;
+      default:
+        bg = Colors.grey.shade100;
+        fg = Colors.grey.shade700;
+        icon = Icons.help_outline;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: status == 'graded'
+              ? const Color(0xFFFFD971)
+              : Colors.grey.shade300,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: fg),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              status.isEmpty ? 'unknown' : status.replaceAll('_', ' '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: fg,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool?> _showConfirmDialog({
+    required String title,
+    required String message,
+    required String confirmLabel,
+  }) {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 18,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF4CC),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.assignment_return_outlined,
+                          color: Color(0xFFB77900),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    message,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade700,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => Navigator.pop(dialogContext, false),
+                          style: _outlinedActionButtonStyle(),
+                          child: const Text('Cancel'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(dialogContext, true),
+                          style: _primaryActionButtonStyle(),
+                          child: Text(confirmLabel),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _returnSubmissionToDraft() async {
     final submissionId = (_submission?['id'] ?? '').toString();
     if (submissionId.isEmpty) return;
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Return Submission to Draft'),
-          content: const Text(
-            'This will let the student continue editing and resubmit later. Do you want to continue?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Return to Draft'),
-            ),
-          ],
-        );
-      },
+    final confirmed = await _showConfirmDialog(
+      title: 'Return Submission to Draft',
+      message:
+          'This will let the student continue editing and resubmit later. Do you want to continue?',
+      confirmLabel: 'Return to Draft',
     );
 
     if (confirmed != true) return;
@@ -241,54 +437,116 @@ class _AdminFormSubmissionDetailViewState
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Grade Submission'),
-          content: SizedBox(
-            width: 420,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: gradeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Grade',
-                    hintText: 'A, B+, Pass, etc.',
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 18,
+                    offset: Offset(0, 8),
                   ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF4CC),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.grade_outlined,
+                            color: Color(0xFFB77900),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'Grade Submission',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(dialogContext, false),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    TextField(
+                      controller: gradeController,
+                      decoration: _dialogInputDecoration(
+                        label: 'Grade',
+                        hint: 'A, B+, Pass, etc.',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: scoreController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: _dialogInputDecoration(
+                        label: 'Score',
+                        hint: '95',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: feedbackController,
+                      maxLines: 4,
+                      decoration: _dialogInputDecoration(
+                        label: 'Feedback',
+                        hint: 'Optional feedback for the student',
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          OutlinedButton(
+                            onPressed: () => Navigator.pop(dialogContext, false),
+                            style: _outlinedActionButtonStyle(),
+                            child: const Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(dialogContext, true),
+                            style: _primaryActionButtonStyle(),
+                            child: const Text('Save Grade'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: scoreController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: const InputDecoration(
-                    labelText: 'Score',
-                    hintText: '95',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: feedbackController,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Feedback',
-                    hintText: 'Optional feedback for the student',
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Save Grade'),
-            ),
-          ],
         );
       },
     );
@@ -368,181 +626,324 @@ class _AdminFormSubmissionDetailViewState
     final feedbackText = _feedbackText();
 
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(color: Colors.black));
     }
 
     if (_error != null) {
-      return Center(child: SelectableText(_error!));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SelectableText(
+                _error!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.red),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: _loadSubmission,
+                style: _outlinedActionButtonStyle(),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 14 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Submission Detail',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
-              ),
-              Wrap(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 760;
+              final actionButtons = Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                alignment: WrapAlignment.end,
+                alignment: isNarrow ? WrapAlignment.start : WrapAlignment.end,
                 children: [
-                  OutlinedButton(
+                  OutlinedButton.icon(
                     onPressed: () {
                       final formId = (_submission?['formTemplateId'] ?? '')
                           .toString();
                       context.go('/dashboard/admin/forms/$formId/submissions');
                     },
-                    child: const Text('Back to Submissions'),
+                    style: _outlinedActionButtonStyle(),
+                    icon: const Icon(Icons.arrow_back, size: 18),
+                    label: const Text('Back to Submissions'),
                   ),
-                  OutlinedButton(
+                  OutlinedButton.icon(
                     onPressed: _exportSubmissionPdf,
-                    child: const Text('Print / Export PDF'),
+                    style: _outlinedActionButtonStyle(),
+                    icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                    label: const Text('Print / Export PDF'),
                   ),
                   if (!isDraft)
-                    OutlinedButton(
+                    OutlinedButton.icon(
                       onPressed: _returnSubmissionToDraft,
-                      child: const Text('Return'),
+                      style: _outlinedActionButtonStyle(),
+                      icon: const Icon(Icons.assignment_return_outlined, size: 18),
+                      label: const Text('Return'),
                     ),
-                  ElevatedButton(
+                  ElevatedButton.icon(
                     onPressed: isDraft ? null : _gradeSubmission,
-                    child: Text(isGraded ? 'Edit Grade' : 'Grade'),
+                    style: _primaryActionButtonStyle(),
+                    icon: const Icon(Icons.grade_outlined, size: 18),
+                    label: Text(isGraded ? 'Edit Grade' : 'Grade'),
                   ),
                 ],
-              ),
-            ],
+              );
+
+              if (isNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const PageSectionHeader(title: 'Submission Detail'),
+                    const SizedBox(height: 12),
+                    actionButtons,
+                  ],
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const PageSectionHeader(title: 'Submission Detail'),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: actionButtons,
+                  ),
+                ],
+              );
+            },
           ),
-          const SizedBox(height: 12),
-          Divider(color: Colors.grey.shade300, thickness: 1),
           const SizedBox(height: 20),
           Expanded(
             child: SelectionArea(
               child: ListView(
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(
+                      MediaQuery.of(context).size.width < 600 ? 16 : 20,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Student: ${_studentName()}',
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade300),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x14000000),
+                          blurRadius: 18,
+                          offset: Offset(0, 8),
                         ),
-                        decoration: BoxDecoration(
-                          color: isGraded
-                              ? Colors.green.shade50
-                              : isDraft
-                                  ? Colors.orange.shade50
-                                  : Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: Colors.grey.shade300),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isNarrow = constraints.maxWidth < 520;
+                            final avatar = Container(
+                              width: 54,
+                              height: 54,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF4CC),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: const Color(0xFFFFD971)),
+                              ),
+                              child: const Icon(
+                                Icons.assignment_ind_outlined,
+                                color: Color(0xFFB77900),
+                              ),
+                            );
+
+                            final info = Column(
+                              crossAxisAlignment: isNarrow
+                                  ? CrossAxisAlignment.center
+                                  : CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: isNarrow
+                                      ? TextAlign.center
+                                      : TextAlign.start,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Student: ${_studentName().isEmpty ? '-' : _studentName()}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: isNarrow
+                                      ? TextAlign.center
+                                      : TextAlign.start,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                              ],
+                            );
+
+                            if (isNarrow) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Center(child: avatar),
+                                  const SizedBox(height: 12),
+                                  info,
+                                ],
+                              );
+                            }
+
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                avatar,
+                                const SizedBox(width: 14),
+                                Expanded(child: info),
+                              ],
+                            );
+                          },
                         ),
-                        child: Text(
-                          status.isEmpty ? 'unknown' : status,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isGraded
-                                ? Colors.green.shade700
-                                : isDraft
-                                    ? Colors.orange.shade700
-                                    : Colors.grey.shade800,
-                          ),
+                        const SizedBox(height: 14),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            _statusChip(status),
+                            if (gradeText.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 7,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(color: Colors.grey.shade300),
+                                ),
+                                child: Text(
+                                  'Grade: $gradeText',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            if (scoreText.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 7,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(color: Colors.grey.shade300),
+                                ),
+                                child: Text(
+                                  'Score: $scoreText',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                      ),
-                      if (gradeText.isNotEmpty)
-                        Text(
-                          'Grade: $gradeText',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade800,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      if (scoreText.isNotEmpty)
-                        Text(
-                          'Score: $scoreText',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade800,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                    ],
-                  ),
-                  if (feedbackText.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Feedback',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
+                        if (feedbackText.isNotEmpty) ...[
+                          const SizedBox(height: 14),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Feedback',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                SelectableText(
+                                  feedbackText,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey.shade800,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          SelectableText(
-                            feedbackText,
+                        ],
+                        if (instructions.trim().isNotEmpty) ...[
+                          const SizedBox(height: 14),
+                          Text(
+                            instructions,
                             style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade800,
+                              fontSize: 14,
+                              color: Colors.grey.shade700,
                               height: 1.5,
                             ),
                           ),
                         ],
-                      ),
+                      ],
                     ),
-                  ],
-                  if (instructions.trim().isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      instructions,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade700,
-                        height: 1.5,
-                      ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(
+                      MediaQuery.of(context).size.width < 600 ? 14 : 20,
                     ),
-                  ],
-                  const SizedBox(height: 24),
-                  FormRenderer(
-                    fields: _fields,
-                    readOnly: true,
-                    textControllers: _textControllers,
-                    checkboxValues: _checkboxValues,
-                    dateValues: _dateValues,
-                    yearControllers: _yearControllers,
-                    signaturePadKeys: _signaturePadKeys,
-                    signatureValues: _signatureValues,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade300),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x14000000),
+                          blurRadius: 18,
+                          offset: Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: FormRenderer(
+                      fields: _fields,
+                      readOnly: true,
+                      textControllers: _textControllers,
+                      checkboxValues: _checkboxValues,
+                      dateValues: _dateValues,
+                      yearControllers: _yearControllers,
+                      signaturePadKeys: _signaturePadKeys,
+                      signatureValues: _signatureValues,
+                    ),
                   ),
                 ],
               ),

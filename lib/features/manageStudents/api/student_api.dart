@@ -76,6 +76,8 @@ class StudentApi {
     required String email,
     required String schoolId,
     String? nickname,
+    String? year,
+    bool? isActive,
   }) async {
     final response = await _client.patchJson('/admin/students/$id', {
       'firstName': firstName,
@@ -83,6 +85,8 @@ class StudentApi {
       'email': email,
       'schoolId': schoolId,
       'name': nickname,
+      if (year != null) 'year': year,
+      if (isActive != null) 'isActive': isActive,
     });
 
     return StudentRow.fromJson(response['student'] as Map<String, dynamic>);

@@ -254,7 +254,7 @@ class _CalendarViewState extends State<CalendarView> {
                   itemCount: days.length,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 7,
-                    childAspectRatio: isCompact ? 0.82 : 1.08,
+                    childAspectRatio: isCompact ? 0.68 : 0.9,
                     crossAxisSpacing: daySpacing,
                     mainAxisSpacing: daySpacing,
                   ),
@@ -263,85 +263,108 @@ class _CalendarViewState extends State<CalendarView> {
                     final isCurrentMonth = _isSameMonth(day, _focusedMonth);
                     final isToday = _isSameDay(day, _today);
                     final dayForms = _formsForDay(day);
-            
-                    return Container(
-                      padding: EdgeInsets.all(dayPadding),
-                      decoration: BoxDecoration(
-                        color: isToday
-                            ? Colors.black
-                            : isCurrentMonth
-                            ? Colors.white
-                            : Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isToday ? Colors.black : Colors.grey.shade300,
-                          width: isToday ? 1.5 : 1,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${day.day}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: isCompact ? 12 : 14,
-                              color: isToday
-                                  ? Colors.white
-                                  : isCurrentMonth
-                                  ? Colors.black87
-                                  : Colors.grey.shade500,
-                            ),
+
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: EdgeInsets.all(dayPadding),
+                        decoration: BoxDecoration(
+                          color: isToday
+                              ? Colors.black
+                              : isCurrentMonth
+                              ? Colors.white
+                              : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isToday
+                                ? Colors.black
+                                : Colors.grey.shade300,
+                            width: isToday ? 1.5 : 1,
                           ),
-                          SizedBox(height: isCompact ? 3 : 5),
-                          if (dayForms.isNotEmpty)
-                            ...dayForms.take(isCompact ? 1 : 2).map((form) {
-                              return Container(
-                                width: double.infinity,
-                                margin: const EdgeInsets.only(bottom: 4),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: isCompact ? 4 : 6,
-                                  vertical: isCompact ? 3 : 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isToday
-                                      ? Colors.white.withOpacity(0.14)
-                                      : const Color(0xFFFFF4CC),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: isToday
-                                        ? Colors.white24
-                                        : const Color(0xFFFFD971),
-                                  ),
-                                ),
-                                child: Text(
-                                  (form['title'] ?? 'Untitled Form').toString(),
+                        ),
+                        child: LayoutBuilder(
+                          builder: (context, cellConstraints) {
+                            final maxVisibleForms = isCompact ? 1 : 1;
+                            final hasMore = dayForms.length > maxVisibleForms;
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '${day.day}',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: isCompact ? 9 : 11,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: isCompact ? 12 : 14,
                                     color: isToday
                                         ? Colors.white
-                                        : const Color(0xFF8A5A00),
-                                    fontWeight: FontWeight.w700,
+                                        : isCurrentMonth
+                                        ? Colors.black87
+                                        : Colors.grey.shade500,
                                   ),
                                 ),
-                              );
-                            }),
-                          if (dayForms.length > (isCompact ? 1 : 2))
-                            Text(
-                              '+${dayForms.length - (isCompact ? 1 : 2)} more',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: isCompact ? 9 : 10,
-                                color: isToday ? Colors.white70 : Colors.grey.shade700,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                        ],
+                                SizedBox(height: isCompact ? 3 : 5),
+                                if (dayForms.isNotEmpty)
+                                  ...dayForms.take(maxVisibleForms).map((form) {
+                                    return Flexible(
+                                      fit: FlexFit.loose,
+                                      child: Container(
+                                        width: double.infinity,
+                                        margin: const EdgeInsets.only(
+                                          bottom: 3,
+                                        ),
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: isCompact ? 4 : 6,
+                                          vertical: isCompact ? 2 : 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isToday
+                                              ? Colors.white.withOpacity(0.14)
+                                              : const Color(0xFFFFF4CC),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          border: Border.all(
+                                            color: isToday
+                                                ? Colors.white24
+                                                : const Color(0xFFFFD971),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          (form['title'] ?? 'Untitled Form')
+                                              .toString(),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: isCompact ? 9 : 10,
+                                            color: isToday
+                                                ? Colors.white
+                                                : const Color(0xFF8A5A00),
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                if (hasMore)
+                                  Text(
+                                    '+${dayForms.length - maxVisibleForms} more',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: isCompact ? 8 : 9,
+                                      color: isToday
+                                          ? Colors.white70
+                                          : Colors.grey.shade700,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
                     );
                   },
@@ -406,10 +429,7 @@ class _CalendarViewState extends State<CalendarView> {
                     SizedBox(height: 2),
                     Text(
                       'Forms with upcoming due dates',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.black54,
-                      ),
+                      style: TextStyle(fontSize: 13, color: Colors.black54),
                     ),
                   ],
                 ),
@@ -563,11 +583,11 @@ class _CalendarViewState extends State<CalendarView> {
   Widget build(BuildContext context) {
     final isAdmin = widget.isAdmin || context.auth.isAdmin;
     return Padding(
-      padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 14 : 24),
+      padding: EdgeInsets.all(
+        MediaQuery.of(context).size.width < 600 ? 14 : 24,
+      ),
       child: _loading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.black),
-            )
+          ? const Center(child: CircularProgressIndicator(color: Colors.black))
           : _error != null
           ? Center(
               child: Column(
@@ -635,15 +655,9 @@ class _CalendarViewState extends State<CalendarView> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                flex: 3,
-                                child: _buildCalendarGrid(),
-                              ),
+                              Expanded(flex: 3, child: _buildCalendarGrid()),
                               const SizedBox(width: 20),
-                              Expanded(
-                                flex: 2,
-                                child: _buildUpcomingList(),
-                              ),
+                              Expanded(flex: 2, child: _buildUpcomingList()),
                             ],
                           ),
                         );

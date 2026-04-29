@@ -98,6 +98,8 @@ class _StudentDetailViewState extends State<StudentDetailView> {
         nickname: _nicknameController.text.trim().isEmpty
             ? null
             : _nicknameController.text.trim(),
+        year: _year,
+        isActive: _isActive,
       );
 
       if (!mounted) return;
@@ -151,9 +153,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
       backgroundColor: Colors.white,
       side: BorderSide(color: Colors.grey.shade300),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     );
   }
 
@@ -162,9 +162,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
       backgroundColor: Colors.black,
       foregroundColor: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     );
   }
 
@@ -193,6 +191,94 @@ class _StudentDetailViewState extends State<StudentDetailView> {
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.red, width: 1.5),
+      ),
+    );
+  }
+
+  Widget _buildYearField() {
+    if (!_isEditing) {
+      return TextFormField(
+        key: ValueKey('year-$_year'),
+        initialValue: _formatYear(_year),
+        readOnly: true,
+        enabled: false,
+        decoration: _inputDecoration('Year'),
+      );
+    }
+
+    return DropdownButtonFormField<String>(
+      value: _year.isEmpty ? null : _year,
+      dropdownColor: Colors.white,
+      iconEnabledColor: Colors.black,
+      style: const TextStyle(color: Colors.black, fontSize: 14),
+      decoration: _inputDecoration('Year'),
+      items: const [
+        DropdownMenuItem(value: '1', child: Text('1st Year')),
+        DropdownMenuItem(value: '2', child: Text('2nd Year')),
+        DropdownMenuItem(value: '3', child: Text('3rd Year')),
+        DropdownMenuItem(value: '4', child: Text('4th Year')),
+      ],
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Year is required';
+        }
+        return null;
+      },
+      onChanged: (value) {
+        if (value == null) return;
+        setState(() {
+          _year = value;
+        });
+      },
+    );
+  }
+
+  Widget _buildActiveStatusField() {
+    if (!_isEditing) {
+      return TextFormField(
+        key: ValueKey('status-$_isActive'),
+        initialValue: _isActive ? 'Active' : 'Deactivated',
+        readOnly: true,
+        enabled: false,
+        decoration: _inputDecoration('Status'),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        value: _isActive,
+        activeColor: Colors.black,
+        title: const Text(
+          'Account Status',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: Colors.black87,
+          ),
+        ),
+        subtitle: Text(
+          _isActive
+              ? 'Student can log in and access available forms.'
+              : 'Student account is deactivated.',
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+        ),
+        secondary: Icon(
+          _isActive ? Icons.check_circle_outline : Icons.block_outlined,
+          color: _isActive ? const Color(0xFF8A5A00) : Colors.grey.shade700,
+        ),
+        onChanged: (value) {
+          setState(() {
+            _isActive = value;
+          });
+        },
       ),
     );
   }
@@ -243,7 +329,9 @@ class _StudentDetailViewState extends State<StudentDetailView> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: Colors.black));
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.black),
+      );
     }
 
     if (_error != null) {
@@ -271,7 +359,9 @@ class _StudentDetailViewState extends State<StudentDetailView> {
     }
 
     return Padding(
-      padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 14 : 24),
+      padding: EdgeInsets.all(
+        MediaQuery.of(context).size.width < 600 ? 14 : 24,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -352,10 +442,7 @@ class _StudentDetailViewState extends State<StudentDetailView> {
                 children: [
                   const PageSectionHeader(title: 'Student Detail'),
                   const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: actionButtons,
-                  ),
+                  Align(alignment: Alignment.centerRight, child: actionButtons),
                 ],
               );
             },
@@ -392,7 +479,9 @@ class _StudentDetailViewState extends State<StudentDetailView> {
                             builder: (context, constraints) {
                               final isNarrow = constraints.maxWidth < 520;
 
-                              final fullName = '${_firstNameController.text} ${_lastNameController.text}'.trim();
+                              final fullName =
+                                  '${_firstNameController.text} ${_lastNameController.text}'
+                                      .trim();
 
                               final avatar = Container(
                                 width: 72,
@@ -400,7 +489,9 @@ class _StudentDetailViewState extends State<StudentDetailView> {
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFFF4CC),
                                   borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(color: const Color(0xFFFFD971)),
+                                  border: Border.all(
+                                    color: const Color(0xFFFFD971),
+                                  ),
                                 ),
                                 child: const Icon(
                                   Icons.person_outline,
@@ -415,10 +506,14 @@ class _StudentDetailViewState extends State<StudentDetailView> {
                                     : CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    fullName.isEmpty ? 'Student Profile' : fullName,
+                                    fullName.isEmpty
+                                        ? 'Student Profile'
+                                        : fullName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    textAlign: isNarrow ? TextAlign.center : TextAlign.start,
+                                    textAlign: isNarrow
+                                        ? TextAlign.center
+                                        : TextAlign.start,
                                     style: const TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.w700,
@@ -430,8 +525,12 @@ class _StudentDetailViewState extends State<StudentDetailView> {
                                     _emailController.text,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    textAlign: isNarrow ? TextAlign.center : TextAlign.start,
-                                    style: TextStyle(color: Colors.grey.shade700),
+                                    textAlign: isNarrow
+                                        ? TextAlign.center
+                                        : TextAlign.start,
+                                    style: TextStyle(
+                                      color: Colors.grey.shade700,
+                                    ),
                                   ),
                                   const SizedBox(height: 10),
                                   _buildStatusBadge(),
@@ -537,21 +636,9 @@ class _StudentDetailViewState extends State<StudentDetailView> {
                             decoration: _inputDecoration('Nickname'),
                           ),
                           const SizedBox(height: 16),
-                          TextFormField(
-                            key: ValueKey('year-$_year'),
-                            initialValue: _formatYear(_year),
-                            readOnly: true,
-                            enabled: false,
-                            decoration: _inputDecoration('Year'),
-                          ),
+                          _buildYearField(),
                           const SizedBox(height: 16),
-                          TextFormField(
-                            key: ValueKey('status-$_isActive'),
-                            initialValue: _isActive ? 'Active' : 'Deactivated',
-                            readOnly: true,
-                            enabled: false,
-                            decoration: _inputDecoration('Status'),
-                          ),
+                          _buildActiveStatusField(),
                         ],
                       ),
                     ),

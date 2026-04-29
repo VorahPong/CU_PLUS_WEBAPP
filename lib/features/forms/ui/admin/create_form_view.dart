@@ -1663,8 +1663,12 @@ class _BuilderFieldTile extends StatelessWidget {
 
             if (type == "checkbox") {
               final leftTextController = TextEditingController(text: label);
-              final optionControllers = _checkboxOptions()
-                  .map((option) => TextEditingController(text: option))
+              final rawOptions = _checkboxOptions();
+              final optionControllers = rawOptions
+                  .map((option) {
+                    final isPlaceholder = rawOptions.length == 1 && option == "Option 1";
+                    return TextEditingController(text: isPlaceholder ? "" : option);
+                  })
                   .toList();
 
               final updated = await showDialog<Map<String, dynamic>>(
