@@ -171,11 +171,6 @@ class _AdminFormSubmissionDetailViewState
     return (_submission?['grade'] ?? '').toString().trim();
   }
 
-  String _scoreText() {
-    final score = _submission?['score'];
-    if (score == null) return '';
-    return score.toString();
-  }
 
   String _feedbackText() {
     return (_submission?['feedback'] ?? '').toString().trim();
@@ -431,8 +426,9 @@ class _AdminFormSubmissionDetailViewState
     final submissionId = (_submission?['id'] ?? '').toString();
     if (submissionId.isEmpty) return;
 
-    final gradeController = TextEditingController(text: _gradeText());
-    final scoreController = TextEditingController(text: _scoreText());
+    String selectedGrade = _gradeText().toLowerCase() == 'graded'
+        ? 'graded'
+        : 'not_graded';
     final feedbackController = TextEditingController(text: _feedbackText());
 
     final confirmed = await showDialog<bool>(
@@ -495,23 +491,32 @@ class _AdminFormSubmissionDetailViewState
                       ],
                     ),
                     const SizedBox(height: 18),
-                    TextField(
-                      controller: gradeController,
-                      decoration: _dialogInputDecoration(
-                        label: 'Grade',
-                        hint: 'A, B+, Pass, etc.',
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: scoreController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: _dialogInputDecoration(
-                        label: 'Score',
-                        hint: '95',
-                      ),
+                    StatefulBuilder(
+                      builder: (context, setDialogState) {
+                        return DropdownButtonFormField<String>(
+                          value: selectedGrade,
+                          dropdownColor: Colors.white,
+                          iconEnabledColor: Colors.black,
+                          style: const TextStyle(color: Colors.black, fontSize: 14),
+                          decoration: _dialogInputDecoration(label: 'Grade Status'),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'graded',
+                              child: Text('Graded'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'not_graded',
+                              child: Text('Not Graded'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setDialogState(() {
+                              selectedGrade = value;
+                            });
+                          },
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -554,23 +559,9 @@ class _AdminFormSubmissionDetailViewState
     if (confirmed != true) return;
 
     try {
-      final rawScore = scoreController.text.trim();
-      final parsedScore = rawScore.isEmpty ? null : num.tryParse(rawScore);
-
-      if (rawScore.isNotEmpty && parsedScore == null) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Score must be a valid number')),
-        );
-        return;
-      }
-
       final client = context.read<ApiClient>();
       await client.patchJson('/admin/forms/submissions/$submissionId/grade', {
-        'grade': gradeController.text.trim().isEmpty
-            ? null
-            : gradeController.text.trim(),
-        'score': parsedScore,
+        'grade': selectedGrade == 'graded' ? 'Graded' : 'Not Graded',
         'feedback': feedbackController.text.trim().isEmpty
             ? null
             : feedbackController.text.trim(),
@@ -622,7 +613,6 @@ class _AdminFormSubmissionDetailViewState
     final isDraft = status == 'draft';
     final isGraded = status == 'graded';
     final gradeText = _gradeText();
-    final scoreText = _scoreText();
     final feedbackText = _feedbackText();
 
     if (_loading) {
@@ -838,27 +828,7 @@ class _AdminFormSubmissionDetailViewState
                                   border: Border.all(color: Colors.grey.shade300),
                                 ),
                                 child: Text(
-                                  'Grade: $gradeText',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ),
-                            if (scoreText.isNotEmpty)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 7,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade50,
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(color: Colors.grey.shade300),
-                                ),
-                                child: Text(
-                                  'Score: $scoreText',
+                                  'Grade Status: $gradeText',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
