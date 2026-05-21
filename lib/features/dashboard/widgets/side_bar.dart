@@ -7,6 +7,7 @@ enum SidebarItem {
   adminAnnouncements,
   calendar,
   adminManageStudents,
+  adminGradingTable,
   support,
   setting,
 }
@@ -134,6 +135,13 @@ class Sidebar extends StatelessWidget {
               title: "Manage Students",
               iconPath: 'assets/images/side-bar/student-icon.svg',
               iconSize: 28,
+            ),
+            _item(
+              context: context,
+              item: SidebarItem.adminGradingTable,
+              title: "Grading Table",
+              iconPath: 'assets/images/side-bar/book-icon.svg',
+              iconSize: 22,
             ),
           ],
 
