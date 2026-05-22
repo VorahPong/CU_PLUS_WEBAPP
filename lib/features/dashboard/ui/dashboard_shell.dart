@@ -152,6 +152,9 @@ class _DashboardShellState extends State<DashboardShell> {
       case SidebarItem.adminManageStudents:
         context.go('/dashboard/admin/students');
         break;
+      case SidebarItem.adminGradingTable:
+        context.go('/dashboard/admin/grading');
+        break;
       case SidebarItem.support:
         context.go('/dashboard/support');
         break;
@@ -186,6 +189,8 @@ class _DashboardShellState extends State<DashboardShell> {
         final SidebarItem routeItem;
         if (loc.startsWith('/dashboard/admin/students')) {
           routeItem = SidebarItem.adminManageStudents;
+        } else if (loc.startsWith('/dashboard/admin/grading')) {
+          routeItem = SidebarItem.adminGradingTable;
         } else if (loc.startsWith('/dashboard/admin/announcements')) {
           routeItem = SidebarItem.adminAnnouncements;
         } else if (loc.startsWith('/dashboard/student/announcements')) {
