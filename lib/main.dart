@@ -6,6 +6,7 @@ import 'package:cu_plus_webapp/features/manageStudents/ui/admin/register_student
 import 'package:cu_plus_webapp/features/manageStudents/ui/admin/student_detail_view.dart.dart';
 
 import 'package:cu_plus_webapp/features/forms/ui/admin/create_form_view.dart';
+import 'package:cu_plus_webapp/features/gradingTable/ui/admin/grading_table_view.dart';
 
 import 'package:cu_plus_webapp/features/announcements/ui/student/announcements_view.dart';
 
@@ -233,6 +234,15 @@ class MyApp extends StatefulWidget {
                 child: AdminFormSubmissionDetailView(
                   submissionId: submissionId,
                 ),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/dashboard/admin/grading',
+            pageBuilder: (context, state) {
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: GradingTableView(),
               );
             },
           ),
